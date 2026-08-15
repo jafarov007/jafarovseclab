@@ -4,10 +4,11 @@ import base64
 import json
 import hmac
 import hashlib
-from flask import Flask, request, jsonify, render_template, redirect, session
+from flask import Flask, request, jsonify, render_template, redirect, session, make_response
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_jwt_key'
+app.config['SESSION_COOKIE_NAME'] = 's8_session'
 
 JWT_SECRET = 's3cr3t_j4f4r0v_l4b_k3y_2024'
 
@@ -53,30 +54,41 @@ def init_db():
             role TEXT
         )
     ''')
-    cursor.execute("INSERT INTO users VALUES (995043202, 'alice.ceo@corp.com', 'password123', 'Alice Whitfield', '+1-555-0101', '1 Executive Plaza, NYC', 'System Admin')")
-    cursor.execute("INSERT INTO users VALUES (552450897, 'bob.martinez@corp.com', 'password123', 'Bob Martinez', '+1-555-0102', '742 Evergreen Terrace', 'Standard User')")
+    cursor.execute("INSERT INTO users VALUES (995043202, 'user.a@example.com', 'password123', 'Alice Whitfield', '+1-555-0101', '1 Executive Plaza, NYC', 'System Admin')")
+    cursor.execute("INSERT INTO users VALUES (552450897, 'user.b@example.com', 'password123', 'Bob Martinez', '+1-555-0102', '742 Evergreen Terrace', 'Standard User')")
     conn.commit()
     return conn
 
 db_conn = init_db()
 
+@app.route('/api/v8/login', methods=['POST'])
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
     if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
+        email = request.form.get('email') or (request.json and request.json.get('email'))
+        password = request.form.get('password') or (request.json and request.json.get('password'))
         cursor = db_conn.cursor()
-        cursor.execute("SELECT user_id, email, role FROM users WHERE (email = ? OR email = 'user.b@example.com' OR email = 'user.a@example.com') AND password = ?", (email, password))
+        cursor.execute("SELECT user_id, email, role FROM users WHERE email = ? AND password = ?", (email, password))
         row = cursor.fetchone()
         if row:
+            jwt_token = create_jwt(row[0], row[2])
             session['email'] = row[1]
             session['user_id'] = row[0]
-            session['jwt_token'] = create_jwt(row[0], row[2])
-            ref = request.headers.get('Referer', './')
-            return redirect(ref)
+            session['jwt_token'] = jwt_token
+
+            if request.is_json or request.path.endswith('/login') and request.method == 'POST' and not request.form:
+                res = jsonify({'success': True, 'token': jwt_token})
+            else:
+                ref = request.headers.get('Referer', './')
+                res = make_response(redirect(ref))
+
+            res.set_cookie('auth_token', jwt_token, path='/')
+            return res
         else:
             error = 'Invalid credentials'
+            if request.is_json:
+                return jsonify({'error': error}), 401
 
     return render_template('login.html', error=error)
 
@@ -87,7 +99,74 @@ def login():
 def logout():
     session.clear()
     ref = request.headers.get('Referer', './')
-    return redirect(ref)
+    res = make_response(redirect(ref))
+    res.set_cookie('auth_token', '', expires=0, path='/')
+    return res
+
+@app.route('/api/v8/user/profile', methods=['GET', 'POST'])
+@app.route('/scenario/8/api/v8/user/profile', methods=['GET', 'POST'])
+@app.route('/scenario8/api/v8/user/profile', methods=['GET', 'POST'])
+@app.route('/s8/api/v8/user/profile', methods=['GET', 'POST'])
+def profile_api():
+    token = request.cookies.get('auth_token')
+    if not token and 'Authorization' in request.headers:
+        auth_header = request.headers['Authorization']
+        if auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+
+    if not token and request.method == 'POST' and request.json:
+        token = request.json.get('token')
+
+    if not token:
+        return jsonify({'error': 'Missing authentication token'}), 401
+
+    parts = token.split('.')
+    if len(parts) < 2:
+        return jsonify({'error': 'Malformed JWT token'}), 400
+
+    try:
+        header = json.loads(base64url_decode(parts[0]))
+        payload = json.loads(base64url_decode(parts[1]))
+        
+        signature_valid = True
+        alg = header.get('alg', 'HS256').lower()
+
+        if alg == 'hs256':
+            if len(parts) >= 3 and parts[2] != '':
+                message = f"{parts[0]}.{parts[1]}".encode('utf-8')
+                expected_sig = base64url_encode(hmac.new(JWT_SECRET.encode('utf-8'), message, hashlib.sha256).digest())
+                if parts[2] != expected_sig:
+                    signature_valid = False
+            else:
+                # Missing signature or empty signature -> Bypassed
+                signature_valid = True
+        elif alg == 'none':
+            # None algorithm -> Bypassed
+            signature_valid = True
+        else:
+            signature_valid = True
+
+        if not signature_valid:
+            return jsonify({'error': 'Invalid signature'}), 401
+
+        user_id = payload.get('user_id')
+        cursor = db_conn.cursor()
+        cursor.execute("SELECT user_id, email, full_name, phone, address, role FROM users WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
+        if row:
+            user = {
+                'user_id': row[0],
+                'email': row[1],
+                'full_name': row[2],
+                'phone': row[3],
+                'address': row[4],
+                'role': row[5]
+            }
+            return jsonify({'success': True, 'data': user, 'token_alg': header.get('alg')})
+        else:
+            return jsonify({'error': 'User profile not found'}), 404
+    except Exception as e:
+        return jsonify({'error': f'JWT processing failed: {str(e)}'}), 400
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/scenario/8', methods=['GET', 'POST'])
@@ -98,63 +177,13 @@ def index():
         return login()
 
     if 'email' not in session:
-        return login()
+        return render_template('login.html', error=None)
 
-    api_response = None
-    submit_token = None
-
-    if request.method == 'POST':
-        submit_token = request.form.get('token', '').strip()
-        if submit_token:
-            parts = submit_token.split('.')
-            if len(parts) < 2:
-                api_response = json.dumps({'error': 'Malformed JWT token'}, indent=2)
-            else:
-                try:
-                    header = json.loads(base64url_decode(parts[0]))
-                    payload = json.loads(base64url_decode(parts[1]))
-                    
-                    signature_valid = True
-                    if header.get('alg') == 'HS256':
-                        message = f"{parts[0]}.{parts[1]}".encode('utf-8')
-                        expected_sig = base64url_encode(hmac.new(JWT_SECRET.encode('utf-8'), message, hashlib.sha256).digest())
-                        if len(parts) < 3 or parts[2] != expected_sig:
-                            signature_valid = False
-                    elif header.get('alg') == 'none' or len(parts) == 2 or parts[2] == '':
-                        pass
-                    else:
-                        signature_valid = False
-
-                    if not signature_valid:
-                        api_response = json.dumps({'error': 'Invalid signature'}, indent=2)
-                    else:
-                        user_id = payload.get('user_id')
-                        cursor = db_conn.cursor()
-                        cursor.execute("SELECT user_id, email, full_name, phone, address, role FROM users WHERE user_id = ?", (user_id,))
-                        row = cursor.fetchone()
-                        if row:
-                            user = {
-                                'user_id': row[0],
-                                'email': row[1],
-                                'full_name': row[2],
-                                'phone': row[3],
-                                'address': row[4],
-                                'role': row[5]
-                            }
-                            api_response = json.dumps({
-                                'success': True,
-                                'data': user
-                            }, indent=2)
-                        else:
-                            api_response = json.dumps({'error': 'User not found'}, indent=2)
-                except Exception as e:
-                    api_response = json.dumps({'error': f'Failed to decode: {str(e)}'}, indent=2)
-
-    is_bob = session['user_id'] == 552450897
+    is_bob = session.get('user_id') == 552450897
     current_name = "Bob Martinez" if is_bob else "Alice Whitfield"
-    token_preset = session['jwt_token']
+    token_preset = session.get('jwt_token', '')
 
-    return render_template('index.html', current_name=current_name, token_preset=token_preset, submit_token=submit_token, api_response=api_response)
+    return render_template('index.html', current_name=current_name, token_preset=token_preset)
 
 @app.route('/code', methods=['GET'])
 @app.route('/scenario/8/code', methods=['GET'])

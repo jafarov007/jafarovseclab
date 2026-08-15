@@ -22,7 +22,8 @@ const userProfiles = {
     full_name: 'Alice Whitfield',
     phone: '+1-555-0101',
     address: '1 Executive Plaza, NYC',
-    bio: 'Chief Executive Officer'
+    bio: 'Chief Executive Officer',
+    avatar_path: '/uploads/avatars/cyber-avatar.png'
   },
   552450897: {
     user_id: 552450897,
@@ -30,7 +31,8 @@ const userProfiles = {
     full_name: 'Bob Martinez',
     phone: '+1-555-0102',
     address: '742 Evergreen Terrace',
-    bio: 'Standard Security Analyst'
+    bio: 'Standard Security Analyst',
+    avatar_path: '/uploads/avatars/developer-avatar.png'
   }
 };
 
@@ -44,8 +46,13 @@ const parseCookies = (cookieHeader) => {
   return list;
 };
 
-// Method Override API Handler
-app.all('/api/v4/user/profile', (req, res) => {
+// Method Override & Avatar API Handler
+app.all([
+  '/api/v4/user/profile', '/api/v4/user/avatar',
+  '/scenario/4/api/v4/user/profile', '/scenario/4/api/v4/user/avatar',
+  '/scenario4/api/v4/user/profile', '/scenario4/api/v4/user/avatar',
+  '/s4/api/v4/user/profile', '/s4/api/v4/user/avatar'
+], (req, res) => {
   let method = req.method;
   if (req.headers['x-http-method-override']) {
     method = req.headers['x-http-method-override'].toUpperCase();
@@ -53,7 +60,7 @@ app.all('/api/v4/user/profile', (req, res) => {
     method = req.query._method.toUpperCase();
   }
 
-  let user_id = req.query.user_id || req.body.user_id;
+  let user_id = req.query.user_id || (req.body && req.body.user_id);
 
   if (method === 'GET') {
     const cookies = parseCookies(req.headers.cookie);
@@ -64,6 +71,14 @@ app.all('/api/v4/user/profile', (req, res) => {
   }
 
   if (method === 'PUT' || method === 'POST') {
+    if (!user_id) {
+      const cookies = parseCookies(req.headers.cookie);
+      const session = cookies['s4_session'];
+      if (session) {
+        user_id = session === 'session_b' ? 552450897 : 995043202;
+      }
+    }
+
     if (!user_id) {
       return res.status(400).json({ error: 'Missing user_id for update action' });
     }
@@ -77,6 +92,7 @@ app.all('/api/v4/user/profile', (req, res) => {
     if (req.body.phone) targetUser.phone = req.body.phone;
     if (req.body.address) targetUser.address = req.body.address;
     if (req.body.bio) targetUser.bio = req.body.bio;
+    if (req.body.avatar_path) targetUser.avatar_path = req.body.avatar_path;
 
     return res.json({
       success: true,
@@ -120,12 +136,13 @@ app.get(['/', '/scenario/4', '/scenario4', '/s4'], (req, res) => {
   const currentUser = isBob ? userProfiles[552450897] : userProfiles[995043202];
 
   let indexHtml = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf-8');
-  indexHtml = indexHtml.replace('{{USER_NAME}}', currentUser.full_name)
-                       .replace('{{USER_ID}}', currentUser.user_id)
-                       .replace('{{FULL_NAME}}', currentUser.full_name)
-                       .replace('{{PHONE}}', currentUser.phone)
-                       .replace('{{ADDRESS}}', currentUser.address)
-                       .replace('{{BIO}}', currentUser.bio);
+  indexHtml = indexHtml.replace(/{{USER_NAME}}/g, currentUser.full_name)
+                       .replace(/{{USER_ID}}/g, currentUser.user_id)
+                       .replace(/{{FULL_NAME}}/g, currentUser.full_name)
+                       .replace(/{{PHONE}}/g, currentUser.phone)
+                       .replace(/{{ADDRESS}}/g, currentUser.address)
+                       .replace(/{{BIO}}/g, currentUser.bio)
+                       .replace(/{{AVATAR_PATH}}/g, currentUser.avatar_path || '/uploads/avatars/developer-avatar.png');
 
   res.send(indexHtml);
 });

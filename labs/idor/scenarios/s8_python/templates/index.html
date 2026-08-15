@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>SSO Identity | PyJWT Authenticator (Scenario 8)</title>
+  <title>SSO Identity Gateway - Scenario 8</title>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root { --bg-dark: #0c0205; --bg-card: #1f050e; --accent: #dc2626; --border: #450a1d; --text: #f1f5f9; --text-muted: #fca5a5; }
@@ -14,55 +14,81 @@
     .logout-btn { color: #f87171; text-decoration: none; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; cursor: pointer; }
     .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
     .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 40px; box-shadow: 0 0 35px rgba(220,38,38,0.15); margin-bottom: 24px; }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
     .card-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.35rem; font-weight: 700; color: #fff; margin: 0; }
-    .btn { background: var(--accent); color: #fff; font-weight: 700; border: none; padding: 12px 28px; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; font-size: 0.88rem; text-transform: uppercase; }
+    .btn { background: var(--accent); color: #fff; font-weight: 700; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; font-size: 0.88rem; text-transform: uppercase; }
     .btn:hover { opacity: 0.9; }
-    .form-group { margin-bottom: 18px; }
-    label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; }
-    textarea { width: 100%; padding: 12px; background: #0c0205; border: 1px solid #dc2626; border-radius: 6px; color: #fff; font-family: 'JetBrains Mono'; box-sizing: border-box; outline: none; }
-    pre { background: #070103; padding: 20px; border-radius: 6px; border: 1px solid var(--border); color: #f87171; font-family: 'JetBrains Mono'; overflow-x: auto; font-size: 0.85rem; }
+    .profile-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 20px; }
+    .info-box { background: #070103; border: 1px solid var(--border); padding: 18px; border-radius: 8px; }
+    .info-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
+    .info-val { font-size: 1.05rem; font-weight: 600; color: #f8fafc; }
     .footer-link { text-align: right; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 16px; }
     .footer-link a { color: #fca5a5; font-family: 'JetBrains Mono'; text-decoration: none; font-size: 0.85rem; }
   </style>
 </head>
 <body>
   <div class="nav">
-    <div class="logo">🛡️ SSO Authenticator Core</div>
+    <div class="logo">🛡️ SSO IDENTITY CORE</div>
     <div class="nav-right">
-      <div class="user-pill">👤 Identity: {{ current_name }}</div>
+      <div class="user-pill">👤 Identity: <span id="nav-user-name">{{ current_name }}</span></div>
       <a href="#" onclick="logout()" class="logout-btn">Log Out</a>
     </div>
   </div>
+
   <div class="container">
     <div class="card">
       <div class="card-header">
-        <h3 class="card-title">Token Authentication Playground</h3>
+        <h3 class="card-title">SSO Profile Dashboard</h3>
+        <button class="btn" onclick="loadProfile()">Refresh Identity Profile</button>
       </div>
-      <p style="color:var(--text-muted); font-size:0.9rem;">Submit cryptographic SSO JWT tokens for system validation.</p>
-      
-      <form method="POST" action="">
-        <div class="form-group">
-          <label>Authorization Token Preset (HS256 Signed for Bob)</label>
-          <textarea name="token" rows="3">{{ submit_token or token_preset }}</textarea>
-        </div>
-        <button class="btn" type="submit">Verify Token</button>
-      </form>
 
-      <h4 style="margin-top:28px; font-size:0.95rem; text-transform:uppercase; color:#fff;">Identity Validation Console Output</h4>
-      <pre id="out">{% if api_response %}{{ api_response }}{% else %}// SSO token verification output will print here{% endif %}</pre>
+      <p style="color:var(--text-muted); font-size:0.9rem;">Authenticated identity profile verified via JWT bearer cookie token.</p>
+
+      <div class="profile-grid">
+        <div class="info-box"><div class="info-label">User ID</div><div class="info-val" id="val-id">Loading...</div></div>
+        <div class="info-box"><div class="info-label">Full Name</div><div class="info-val" id="val-name">Loading...</div></div>
+        <div class="info-box"><div class="info-label">Email Address</div><div class="info-val" id="val-email">Loading...</div></div>
+        <div class="info-box"><div class="info-label">SSO Role</div><div class="info-val" id="val-role">Loading...</div></div>
+        <div class="info-box"><div class="info-label">Phone Number</div><div class="info-val" id="val-phone">Loading...</div></div>
+        <div class="info-box"><div class="info-label">Address</div><div class="info-val" id="val-address">Loading...</div></div>
+      </div>
 
       <div class="footer-link">
         <a href="code" target="_blank">🔍 Python Source Code Review (/code)</a>
       </div>
     </div>
   </div>
+
   <script>
+    async function loadProfile() {
+      const basePath = window.location.pathname.replace(/\/$/, '');
+      try {
+        const res = await fetch(basePath + '/api/v8/user/profile');
+        const json = await res.json();
+        if (json.success && json.data) {
+          document.getElementById('val-id').innerText = json.data.user_id;
+          document.getElementById('val-name').innerText = json.data.full_name;
+          document.getElementById('val-email').innerText = json.data.email;
+          document.getElementById('val-role').innerText = json.data.role;
+          document.getElementById('val-phone').innerText = json.data.phone;
+          document.getElementById('val-address').innerText = json.data.address;
+          document.getElementById('nav-user-name').innerText = json.data.full_name;
+        } else {
+          alert('Failed to load profile: ' + (json.error || 'Unknown error'));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
     function logout() {
       let path = window.location.pathname;
       if (!path.endsWith('/')) path += '/';
       window.location.href = path + 'logout';
     }
+
+    // Load profile on initial page load
+    loadProfile();
   </script>
 </body>
 </html>
