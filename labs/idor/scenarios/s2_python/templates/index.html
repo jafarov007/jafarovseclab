@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FinTech Wealth Analytics | Portfolio Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg-dark: #040806; --bg-card: #0b1410; --accent: #10b981; --border: #142c1f; --text: #e2e8f0; --text-muted: #6ee7b7; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-dark); color: var(--text); margin: 0; padding: 0; min-height: 100vh; }
+    .nav { height: 70px; background: #080f0c; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; }
+    .logo { font-family: 'Cinzel', serif; font-weight: 600; font-size: 1.25rem; color: var(--accent); letter-spacing: 1px; }
+    .nav-right { display: flex; align-items: center; gap: 20px; }
+    .user-pill { background: rgba(16,185,129,0.08); border: 1px solid var(--border); color: var(--accent); padding: 8px 18px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; }
+    .logout-btn { color: #f87171; text-decoration: none; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; cursor: pointer; }
+    .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); margin-bottom: 24px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .card-title { font-size: 1.3rem; font-weight: 700; color: #fff; margin: 0; }
+    .btn { background: var(--accent); color: #022c22; font-weight: 700; border: none; padding: 12px 28px; border-radius: 6px; cursor: pointer; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .btn:hover { opacity: 0.9; }
+    .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+    .info-box { background: #070d0a; border: 1px solid var(--border); padding: 18px; border-radius: 6px; }
+    .info-label { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-family: 'JetBrains Mono'; margin-bottom: 6px; }
+    .info-val { font-size: 1.1rem; font-weight: 700; color: #fff; }
+    .footer-link { text-align: right; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 16px; }
+    .footer-link a { color: #a7f3d0; font-family: 'JetBrains Mono'; text-decoration: none; font-size: 0.85rem; }
+    .error-alert { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.2); color: #f87171; padding: 14px; border-radius: 6px; margin-bottom: 20px; font-family: 'JetBrains Mono'; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <div class="logo">FINTECH PORTFOLIO MANAGER</div>
+    <div class="nav-right">
+      <div class="user-pill">👤 Client: {{ current_name }}</div>
+      <a href="#" onclick="logout()" class="logout-btn">Log Out</a>
+    </div>
+  </div>
+  <div class="container">
+    {% if error %}<div class="error-alert">⚠️ {{ error }}</div>{% endif %}
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Asset Balance & Account Statement</h3>
+        <form method="GET" action="">
+          <input type="hidden" name="user_id" value="{{ current_id }}">
+          <input type="hidden" name="session_user_id" value="{{ current_id }}">
+          <button type="submit" class="btn">Fetch Statement</button>
+        </form>
+      </div>
+      <p style="color:#64748b; font-size:0.9rem;">Submit transaction requests dynamically to refresh portfolio matrices.</p>
+      
+      <div class="profile-grid">
+        <div class="info-box">
+          <div class="info-label">Account Holder</div>
+          <div class="info-val">{% if statement_user %}{{ statement_user.full_name }}{% else %}-{% endif %}</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">Total Portfolio Balance</div>
+          <div class="info-val" style="color:var(--accent);">{% if statement_user %}{{ statement_user.balance }}{% else %}-{% endif %}</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">Account Email</div>
+          <div class="info-val">{% if statement_user %}{{ statement_user.email }}{% else %}-{% endif %}</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">Account Designation</div>
+          <div class="info-val">{% if statement_user %}{{ statement_user.role }}{% else %}-{% endif %}</div>
+        </div>
+      </div>
+      <div class="footer-link">
+        <a href="code" target="_blank">🔍 Python Source Code Review (/code)</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    function logout() {
+      let path = window.location.pathname;
+      if (!path.endsWith('/')) path += '/';
+      window.location.href = path + 'logout';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SSO Identity | Sign In</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Plus+Jakarta+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0c0205; color: #f1f5f9; margin: 0; padding: 0; display: flex; height: 100vh; align-items: center; justify-content: center; }
+    .login-card { width: 380px; background: #1f050e; border: 1px solid #450a1d; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(220,38,38,0.25); }
+    .logo { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 700; color: #dc2626; text-align: center; margin-bottom: 30px; letter-spacing: -0.5px; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-size: 0.8rem; font-weight: 600; color: #fca5a5; margin-bottom: 8px; text-transform: uppercase; }
+    input { width: 100%; padding: 12px; background: #0c0205; border: 1px solid #450a1d; border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; box-sizing: border-box; outline: none; transition: border-color 0.2s; }
+    input:focus { border-color: #dc2626; }
+    .btn { width: 100%; background: #dc2626; color: #fff; font-weight: 700; border: none; padding: 14px; cursor: pointer; border-radius: 6px; font-size: 0.9rem; text-transform: uppercase; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.9; }
+    .error { color: #f87171; font-size: 0.85rem; margin-top: 15px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="logo">SSO IDENTITY GATEWAY</div>
+    <form method="POST" action="">
+      <div class="form-group">
+        <label>Operator Email</label>
+        <input type="email" name="email" required placeholder="user.b@example.com">
+      </div>
+      <div class="form-group">
+        <label>Master Token Password</label>
+        <input type="password" name="password" required placeholder="••••••••">
+      </div>
+      <button class="btn" type="submit">Access Identity Core</button>
+      {% if error %}<div class="error">{{ error }}</div>{% endif %}
+    </form>
+  </div>
+</body>
+</html>

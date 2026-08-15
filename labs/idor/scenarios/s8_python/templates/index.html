@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SSO Identity | PyJWT Authenticator (Scenario 8)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg-dark: #0c0205; --bg-card: #1f050e; --accent: #dc2626; --border: #450a1d; --text: #f1f5f9; --text-muted: #fca5a5; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-dark); color: var(--text); margin: 0; padding: 0; min-height: 100vh; }
+    .nav { height: 70px; background: #140309; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; }
+    .logo { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.25rem; color: var(--accent); }
+    .nav-right { display: flex; align-items: center; gap: 20px; }
+    .user-pill { background: rgba(220,38,38,0.08); border: 1px solid var(--border); color: var(--accent); padding: 8px 18px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; }
+    .logout-btn { color: #f87171; text-decoration: none; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; cursor: pointer; }
+    .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 40px; box-shadow: 0 0 35px rgba(220,38,38,0.15); margin-bottom: 24px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .card-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.35rem; font-weight: 700; color: #fff; margin: 0; }
+    .btn { background: var(--accent); color: #fff; font-weight: 700; border: none; padding: 12px 28px; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; font-size: 0.88rem; text-transform: uppercase; }
+    .btn:hover { opacity: 0.9; }
+    .form-group { margin-bottom: 18px; }
+    label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; }
+    textarea { width: 100%; padding: 12px; background: #0c0205; border: 1px solid #dc2626; border-radius: 6px; color: #fff; font-family: 'JetBrains Mono'; box-sizing: border-box; outline: none; }
+    pre { background: #070103; padding: 20px; border-radius: 6px; border: 1px solid var(--border); color: #f87171; font-family: 'JetBrains Mono'; overflow-x: auto; font-size: 0.85rem; }
+    .footer-link { text-align: right; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 16px; }
+    .footer-link a { color: #fca5a5; font-family: 'JetBrains Mono'; text-decoration: none; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <div class="logo">🛡️ SSO Authenticator Core</div>
+    <div class="nav-right">
+      <div class="user-pill">👤 Identity: {{ current_name }}</div>
+      <a href="#" onclick="logout()" class="logout-btn">Log Out</a>
+    </div>
+  </div>
+  <div class="container">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Token Authentication Playground</h3>
+      </div>
+      <p style="color:var(--text-muted); font-size:0.9rem;">Submit cryptographic SSO JWT tokens for system validation.</p>
+      
+      <form method="POST" action="">
+        <div class="form-group">
+          <label>Authorization Token Preset (HS256 Signed for Bob)</label>
+          <textarea name="token" rows="3">{{ submit_token or token_preset }}</textarea>
+        </div>
+        <button class="btn" type="submit">Verify Token</button>
+      </form>
+
+      <h4 style="margin-top:28px; font-size:0.95rem; text-transform:uppercase; color:#fff;">Identity Validation Console Output</h4>
+      <pre id="out">{% if api_response %}{{ api_response }}{% else %}// SSO token verification output will print here{% endif %}</pre>
+
+      <div class="footer-link">
+        <a href="code" target="_blank">🔍 Python Source Code Review (/code)</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    function logout() {
+      let path = window.location.pathname;
+      if (!path.endsWith('/')) path += '/';
+      window.location.href = path + 'logout';
+    }
+  </script>
+</body>
+</html>

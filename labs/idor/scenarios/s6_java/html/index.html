@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SpringAdmin | User Access Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg-dark: #0f172a; --bg-card: #1e293b; --accent: #38bdf8; --border: #334155; --text: #f1f5f9; --text-muted: #94a3b8; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-dark); color: var(--text); margin: 0; padding: 0; min-height: 100vh; }
+    .nav { height: 70px; background: #0b1329; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; }
+    .logo { font-weight: 800; font-size: 1.15rem; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+    .nav-right { display: flex; align-items: center; gap: 20px; }
+    .user-pill { background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.15); color: var(--accent); padding: 8px 18px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; }
+    .logout-btn { color: #f87171; text-decoration: none; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; cursor: pointer; }
+    .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); margin-bottom: 24px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .card-title { font-size: 1.3rem; font-weight: 700; color: #fff; margin: 0; }
+    .btn { background: var(--accent); color: #0f172a; font-weight: 700; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; text-transform: uppercase; }
+    .table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9rem; }
+    .table th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border); color: var(--text-muted); font-family: 'JetBrains Mono'; font-size: 0.75rem; text-transform: uppercase; }
+    .table td { padding: 14px 12px; border-bottom: 1px solid var(--border); }
+    .status-msg { background: rgba(56,189,248,0.1); border: 1px solid var(--accent); color: var(--accent); padding: 14px; border-radius: 6px; margin-bottom: 20px; font-family: 'JetBrains Mono'; font-size: 0.85rem; }
+    .footer-link { text-align: right; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 16px; }
+    .footer-link a { color: #7dd3fc; font-family: 'JetBrains Mono'; text-decoration: none; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <div class="logo">☕ SPRINGADMIN ACCESS MANAGEMENT</div>
+    <div class="nav-right">
+      <div class="user-pill">👤 Operator: {{CURRENT_NAME}} ({{ROLE_NAME}})</div>
+      <a href="#" onclick="logout()" class="logout-btn">Log Out</a>
+    </div>
+  </div>
+  <div class="container">
+    {{STATUS_MSG}}
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Corporate User Directory & Privileges</h3>
+      </div>
+      <p style="color:#94a3b8; font-size:0.9rem;">Internal Directory Role Assignments and Executive Rights Management</p>
+      
+      <table class="table">
+        <thead>
+          <tr>
+            <th>User ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Current Role</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>552450897</code></td>
+            <td>Bob Martinez</td>
+            <td>user.b@example.com</td>
+            <td><span style="color:#f87171;">Standard User</span></td>
+            <td>
+              <form id="promote-form" method="POST" action="">
+                <script>
+                  document.getElementById('promote-form').action = window.location.pathname.replace(/\/$/, '') + '/api/v6/admin/promote';
+                </script>
+                <input type="hidden" name="target_user_id" value="552450897">
+                <button type="submit" class="btn">Promote Role</button>
+              </form>
+            </td>
+          </tr>
+          <tr>
+            <td><code>995043202</code></td>
+            <td>Alice Whitfield</td>
+            <td>user.a@example.com</td>
+            <td><span style="color:var(--accent); font-weight:700;">Administrator</span></td>
+            <td><button class="btn" disabled style="opacity:0.4;">Promoted</button></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="footer-link">
+        <a href="code" target="_blank">🔍 Java Source Code Review (/code)</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    function logout() {
+      let path = window.location.pathname;
+      if (!path.endsWith('/')) path += '/';
+      window.location.href = path + 'logout';
+    }
+  </script>
+</body>
+</html>

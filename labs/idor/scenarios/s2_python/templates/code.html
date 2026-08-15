@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Scenario 2 Source Code Review | Python</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <style>
+    :root {
+      --bg-dark: #0d1117;
+      --bg-side: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --accent: #10b981;
+    }
+    body {
+      margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg-dark); color: var(--text); display: flex; height: 100vh; overflow: hidden;
+    }
+    #sidebar {
+      width: 260px; background: var(--bg-side); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; padding: 20px; box-sizing: border-box;
+    }
+    #sidebar h2 { font-size: 1rem; color: #fff; margin-top: 0; margin-bottom: 20px; font-weight: 700; }
+    .file-item {
+      padding: 10px 14px; margin-bottom: 6px; border-radius: 6px; cursor: pointer;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #8b949e;
+      transition: all 0.2s ease; border: 1px solid transparent;
+    }
+    .file-item:hover { background: rgba(255,255,255,0.02); color: #fff; }
+    .file-item.active { background: rgba(16,185,129,0.12); border-color: var(--accent); color: #fff; }
+    #editor-container { flex: 1; display: flex; flex-direction: column; background: var(--bg-dark); overflow: hidden; }
+    #editor-header {
+      height: 50px; border-bottom: 1px solid var(--border); display: flex; align-items: center;
+      padding: 0 24px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: #fff; font-weight: 600;
+    }
+    #code-frame { flex: 1; padding: 24px; overflow: auto; margin: 0; }
+    pre { margin: 0; }
+    code { font-family: 'JetBrains Mono', monospace !important; font-size: 0.9rem !important; }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <h2>Files</h2>
+    <div id="file-list"></div>
+  </div>
+  <div id="editor-container">
+    <div id="editor-header">Select a file to review</div>
+    <pre id="code-frame"><code id="code-block" class="language-python">// Code will load here</code></pre>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-docker.min.js"></script>
+  <script>
+    const files = ['app.py', 'templates/index.html', 'templates/login.html', 'requirements.txt', 'Dockerfile'];
+    const list = document.getElementById('file-list');
+    files.forEach((f, idx) => {
+      const item = document.createElement('div');
+      item.className = 'file-item' + (idx === 0 ? ' active' : '');
+      item.textContent = f;
+      item.onclick = () => loadFile(f, item);
+      list.appendChild(item);
+    });
+    
+    async function loadFile(name, element) {
+      document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
+      element.classList.add('active');
+      document.getElementById('editor-header').textContent = name;
+      
+      const ext = name.split('.').pop();
+      const codeBlock = document.getElementById('code-block');
+      codeBlock.className = 'language-' + (ext === 'py' ? 'python' : ext === 'html' ? 'markup' : ext === 'txt' ? 'markup' : 'docker');
+      
+      try {
+        const basePath = window.location.pathname.replace(/\/code$/, '').replace(/\/$/, '');
+        const res = await fetch(basePath + '/code/file?name=' + encodeURIComponent(name));
+        const text = await res.text();
+        codeBlock.textContent = text;
+        Prism.highlightElement(codeBlock);
+      } catch (err) {
+        codeBlock.textContent = '// Error loading file: ' + err.message;
+      }
+    }
+    if(files.length > 0) {
+      loadFile(files[0], document.querySelector('.file-item'));
+    }
+  </script>
+</body>
+</html>

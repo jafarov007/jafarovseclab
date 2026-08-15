@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CloudMedia | Profile Avatar Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg-dark: #0b0f19; --bg-card: #111827; --accent: #0d9488; --border: #1f2937; --text: #f1f5f9; --text-muted: #94a3b8; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-dark); color: var(--text); margin: 0; padding: 0; min-height: 100vh; }
+    .nav { height: 70px; background: #0f172a; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; }
+    .logo { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.2rem; color: var(--accent); }
+    .nav-right { display: flex; align-items: center; gap: 20px; }
+    .user-pill { background: rgba(13,148,136,0.08); border: 1px solid var(--border); color: var(--accent); padding: 8px 18px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; }
+    .logout-btn { color: #f87171; text-decoration: none; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; }
+    .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); margin-bottom: 24px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .card-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.35rem; font-weight: 700; color: #fff; margin: 0; }
+    .btn { background: var(--accent); color: #fff; font-weight: 700; border: none; padding: 12px 28px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; font-size: 0.88rem; text-transform: uppercase; }
+    .btn:hover { opacity: 0.9; }
+    .avatar-options { display: flex; gap: 16px; margin: 24px 0; }
+    .avatar-box { border: 2px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; background: #0b0f19; flex: 1; transition: all 0.2s ease; }
+    .avatar-box.selected { border-color: var(--accent); background: rgba(13,148,136,0.05); }
+    .avatar-img { width: 64px; height: 64px; border-radius: 50%; background: var(--border); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto; font-size: 1.5rem; }
+    .footer-link { text-align: right; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 16px; }
+    .footer-link a { color: #38bdf8; font-family: 'JetBrains Mono'; text-decoration: none; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <div class="logo">🎨 CloudMedia Avatar Studio</div>
+    <div class="nav-right">
+      <div class="user-pill">👤 Workspace: {{USER_NAME}}</div>
+      <a href="#" onclick="logout()" class="logout-btn">Log Out</a>
+    </div>
+  </div>
+  <div class="container">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Choose Profile Avatar Image</h3>
+      </div>
+      <p style="color:var(--text-muted); font-size:0.9rem;">Select an avatar preset below and click Apply Avatar to update your profile photo.</p>
+      
+      <div class="avatar-options">
+        <div class="avatar-box selected" onclick="selectAvatar('/uploads/avatars/cyber-avatar.png', this)">
+          <div class="avatar-img">🤖</div>
+          <div style="font-size:0.85rem; font-weight:600;">Cyber Bot</div>
+        </div>
+        <div class="avatar-box" onclick="selectAvatar('/uploads/avatars/developer-avatar.png', this)">
+          <div class="avatar-img">👨‍💻</div>
+          <div style="font-size:0.85rem; font-weight:600;">Developer</div>
+        </div>
+        <div class="avatar-box" onclick="selectAvatar('/uploads/avatars/ninja-avatar.png', this)">
+          <div class="avatar-img">🥷</div>
+          <div style="font-size:0.85rem; font-weight:600;">Security Ninja</div>
+        </div>
+      </div>
+
+      <button class="btn" onclick="saveAvatar()">Apply Avatar to Profile</button>
+      <div id="status-msg" style="margin-top:16px; font-family:'JetBrains Mono'; font-size:0.85rem; color:#38bdf8;"></div>
+
+      <div class="footer-link">
+        <a href="code" target="_blank">🔍 Node.js Source Code Review (/code)</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    let selectedPath = '/uploads/avatars/cyber-avatar.png';
+    function selectAvatar(path, el) {
+      selectedPath = path;
+      document.querySelectorAll('.avatar-box').forEach(b => b.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+    async function saveAvatar() {
+      const basePath = window.location.pathname.replace(/\/$/, '');
+      const res = await fetch(basePath + '/api/v4/user/avatar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: {{USER_ID}}, avatar_path: selectedPath })
+      });
+      const json = await res.json();
+      if (json.success) {
+        document.getElementById('status-msg').textContent = '✅ Profile avatar reference updated in backend storage!';
+      }
+    }
+    function logout() {
+      let path = window.location.pathname;
+      if (!path.endsWith('/')) path += '/';
+      window.location.href = path + 'logout';
+    }
+  </script>
+</body>
+</html>

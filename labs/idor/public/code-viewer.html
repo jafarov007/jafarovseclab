@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JafarovSecLab | Source Code Reviewer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --bg-editor: #0d1117;
+      --bg-sidebar: #05070a;
+      --border-color: rgba(255, 255, 255, 0.1);
+      --text-main: #c9d1d9;
+      --text-muted: #8b949e;
+      --accent-cyan: #58a6ff;
+      --accent-green: #3fb950;
+      --accent-purple: #bc8cff;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { height: 100vh; display: flex; flex-direction: column; background: var(--bg-dark); color: var(--text-main); font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
+    .header { height: 50px; background: var(--bg-sidebar); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+    .title { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 700; color: var(--accent-cyan); display: flex; align-items: center; gap: 8px; }
+    .badge { font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; background: rgba(88, 166, 255, 0.15); color: var(--accent-cyan); border: 1px solid rgba(88, 166, 255, 0.3); font-family: 'JetBrains Mono', monospace; text-transform: uppercase; }
+    .container { flex: 1; display: flex; overflow: hidden; }
+    .sidebar { width: 280px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); overflow-y: auto; padding: 12px; }
+    .nav-header { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin: 12px 8px 8px 8px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; margin-bottom: 4px; font-size: 0.82rem; }
+    .nav-item:hover { background: rgba(255, 255, 255, 0.05); }
+    .nav-item.active { background: rgba(88, 166, 255, 0.12); color: #fff; border: 1px solid rgba(88, 166, 255, 0.3); }
+    .nav-lang { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; padding: 2px 6px; border-radius: 3px; background: var(--bg-dark); }
+    .editor-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .editor-header { height: 40px; background: var(--bg-editor); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+    .file-path { color: var(--text-muted); }
+    .code-area { flex: 1; overflow: auto; padding: 20px; background: var(--bg-editor); font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; line-height: 1.6; }
+    pre[class*="language-"] { background: transparent !important; padding: 0 !important; margin: 0 !important; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">
+      <span>🔍 JafarovSecLab White-Box Code Inspector</span>
+    </div>
+    <span class="badge" id="lang-badge">Code Review</span>
+  </div>
+  <div class="container">
+    <div class="sidebar">
+      <div class="nav-header">Select Scenario Source Code</div>
+      <div id="file-list"></div>
+    </div>
+    <div class="editor-wrapper">
+      <div class="editor-header">
+        <span class="file-path" id="file-path-display">Select a file...</span>
+        <span id="file-lang-display" style="color:var(--accent-green)">-</span>
+      </div>
+      <div class="code-area">
+        <pre><code id="code-block" class="language-javascript">// Loading source code...</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-php.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-go.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-graphql.min.js"></script>
+
+  <script>
+    let files = [];
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialScenario = urlParams.get('scenario');
+
+    async function loadFileList() {
+      try {
+        const res = await fetch('/api/code/files');
+        files = await res.json();
+        renderNav();
+
+        if (initialScenario) {
+          const matchedFile = files.find(f => f.scenario == initialScenario);
+          if (matchedFile) {
+            loadFile(matchedFile.filename);
+            return;
+          }
+        }
+        if (files.length > 0) loadFile(files[0].filename);
+      } catch (err) {
+        document.getElementById('code-block').textContent = '// Error loading files: ' + err.message;
+      }
+    }
+
+    function renderNav() {
+      const container = document.getElementById('file-list');
+      container.innerHTML = files.map(f => `
+        <div class="nav-item ${urlParams.get('file') === f.filename ? 'active' : ''}" onclick="loadFile('${f.filename}')">
+          <span style="flex:1;">${f.scenario}. ${f.description}</span>
+          <span class="nav-lang">${f.language}</span>
+        </div>
+      `).join('');
+    }
+
+    async function loadFile(filename) {
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      const activeFile = files.find(f => f.filename === filename);
+      
+      document.getElementById('file-path-display').textContent = `labs/idor/code_sources/${filename}`;
+      document.getElementById('file-lang-display').textContent = activeFile ? activeFile.language.toUpperCase() : '-';
+      document.getElementById('lang-badge').textContent = activeFile ? activeFile.language.toUpperCase() : 'CODE REVIEW';
+
+      try {
+        const res = await fetch(`/api/code/view/${filename}`);
+        const data = await res.json();
+        
+        const codeBlock = document.getElementById('code-block');
+        codeBlock.className = `language-${getPrismLang(activeFile ? activeFile.language : '')}`;
+        codeBlock.textContent = data.content;
+        Prism.highlightElement(codeBlock);
+      } catch (err) {
+        document.getElementById('code-block').textContent = '// Error loading file content: ' + err.message;
+      }
+    }
+
+    function getPrismLang(lang) {
+      switch (lang.toLowerCase()) {
+        case 'python': return 'python';
+        case 'php': return 'php';
+        case 'go': return 'go';
+        case 'java': return 'java';
+        case 'graphql': return 'graphql';
+        default: return 'javascript';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadFileList);
+  </script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CorpProfile | User Profile Dashboard (Scenario 1)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0b0f19; color: #e2e8f0; margin: 0; padding: 40px; }
+    .card { max-width: 650px; margin: 0 auto; background: #131b2e; border: 1px solid #1e293b; border-radius: 12px; padding: 30px; }
+    h2 { color: #00ffaa; margin-top: 0; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; }
+    input { width: 100%; padding: 10px; background: #0b0f19; border: 1px solid #334155; border-radius: 6px; color: #fff; font-family: 'JetBrains Mono', monospace; }
+    button { background: #00ffaa; color: #000; font-weight: 700; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+    button:hover { background: #00cc88; }
+    pre { background: #070a12; padding: 16px; border-radius: 6px; color: #00ffaa; overflow-x: auto; font-family: 'JetBrains Mono', monospace; }
+    .badge { background: rgba(0, 255, 170, 0.15); color: #00ffaa; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; }
+    .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 16px; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header-bar">
+      <h2>CorpProfile Portal</h2>
+      <span class="badge">Node.js Express / v1</span>
+    </div>
+    <p style="color:#94a3b8; font-size:0.9rem;">Scenario 1: IDOR + Timestamp Window Token Inspection</p>
+
+    <div class="form-group">
+      <label>Target user_id</label>
+      <input type="text" id="user_id" placeholder="e.g. 995043202">
+    </div>
+    <div class="form-group">
+      <label>auth_token</label>
+      <input type="text" id="auth_token" placeholder="Your auth token">
+    </div>
+    <div class="form-group">
+      <label>timestamp</label>
+      <input type="text" id="timestamp" placeholder="Current timestamp (e.g. 178673924)">
+    </div>
+    <button onclick="fetchProfile()">Fetch User Profile</button>
+
+    <h3 style="margin-top:24px; font-size:0.95rem;">API Response Output</h3>
+    <pre id="output">// Results will appear here</pre>
+
+    <div style="margin-top:20px; text-align:right;">
+      <a href="/scenario/1/code" target="_blank" style="color:#a855f7; text-decoration:none; font-size:0.85rem; font-family:'JetBrains Mono';">🔍 Inspect Source Code (/code)</a>
+    </div>
+  </div>
+
+  <script>
+    async function fetchProfile() {
+      const uid = document.getElementById('user_id').value;
+      const token = document.getElementById('auth_token').value;
+      const ts = document.getElementById('timestamp').value;
+      try {
+        const res = await fetch(`/api/v1/user/profile?user_id=${uid}&auth_token=${token}&timestamp=${ts}`);
+        const data = await res.json();
+        document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+      } catch(e) {
+        document.getElementById('output').textContent = e.message;
+      }
+    }
+  </script>
+</body>
+</html>

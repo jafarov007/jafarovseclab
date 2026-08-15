@@ -1,0 +1,130 @@
+version: '3.8'
+
+services:
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "8777:8777"
+    environment:
+      - NODE_ENV=production
+      - IDOR_LAB_URL=http://idor-gateway:8081
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - labnet
+    restart: unless-stopped
+
+  idor-gateway:
+    build:
+      context: ./labs/idor/gateway
+      dockerfile: Dockerfile
+    profiles:
+      - scenarios
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+      - "8082:8082"
+      - "8083:8083"
+      - "8084:8084"
+      - "8085:8085"
+      - "8086:8086"
+      - "8087:8087"
+      - "8088:8088"
+    depends_on:
+      - idor-s1
+      - idor-s2
+      - idor-s3
+      - idor-s4
+      - idor-s5
+      - idor-s6
+      - idor-s7
+      - idor-s8
+    networks:
+      - labnet
+    restart: unless-stopped
+
+  idor-s1:
+    build:
+      context: ./labs/idor/scenarios/s1_node
+      dockerfile: Dockerfile
+    profiles:
+      - scenarios
+    networks:
+      - labnet
+    restart: unless-stopped
+
+  idor-s2:
+    build:
+      context: ./labs/idor/scenarios/s2_python
+      dockerfile: Dockerfile
+    profiles:
+      - scenarios
+    networks:
+      - labnet
+    restart: unless-stopped
+
+  idor-s3:
+    build:
+      context: ./labs/idor/scenarios/s3_php
+      dockerfile: Dockerfile
+    profiles:
+      - scenarios
+    networks:
+      - labnet
+    restart: unless-stopped
+
+  idor-s4:
+    build:
+      context: ./labs/idor/scenarios/s4_node
+      dockerfile: Dockerfile
+    profiles:
+      - scenarios
+    networks:
+      - labnet
+    restart: unless-stopped
+
+  idor-s5:
+    build:
+      context: ./labs/idor/scenarios/s5_go
+      dockerfile: Dockerfile
+    profiles:
+      - scenarios
+    networks:
+      - labnet
+    restart: unless-stopped
+
+  idor-s6:
+    build:
+      context: ./labs/idor/scenarios/s6_java
+      dockerfile: Dockerfile
+    profiles:
+      - scenarios
+    networks:
+      - labnet
+    restart: unless-stopped
+
+  idor-s7:
+    build:
+      context: ./labs/idor/scenarios/s7_graphql
+      dockerfile: Dockerfile
+    profiles:
+      - scenarios
+    networks:
+      - labnet
+    restart: unless-stopped
+
+  idor-s8:
+    build:
+      context: ./labs/idor/scenarios/s8_python
+      dockerfile: Dockerfile
+    profiles:
+      - scenarios
+    networks:
+      - labnet
+    restart: unless-stopped
+
+networks:
+  labnet:
+    driver: bridge

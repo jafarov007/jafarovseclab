@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="JafarovSecLab - Advanced Cyber Security Training Platform">
+  <title>JafarovSecLab | Security Training Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Header Bar -->
+  <header id="top-bar">
+    <div class="top-bar-left">
+      <button id="sidebar-toggle" class="icon-btn" aria-label="Toggle sidebar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <a href="#" class="logo" onclick="event.preventDefault(); window.renderWelcome();">
+        <div class="logo-shield">🛡️</div>
+        <div class="logo-text">Jafarov<span class="logo-accent">SecLab</span></div>
+      </a>
+    </div>
+    <div class="top-bar-right">
+      <div class="status-indicator" id="lab-status-indicator">
+        <span class="status-dot offline"></span>
+        <span class="status-text" data-i18n="status_idle">IDLE</span>
+      </div>
+      <button id="lang-toggle" class="lang-btn" aria-label="Toggle language">
+        <span class="lang-flag">🇬🇧</span>
+        <span class="lang-code">EN</span>
+      </button>
+    </div>
+  </header>
+
+  <div id="app-container">
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar">
+      <div class="sidebar-search">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="lab-search" placeholder="Search labs..." data-i18n-placeholder="search_placeholder" autocomplete="off">
+        </div>
+      </div>
+      <nav id="lab-list" class="sidebar-nav"></nav>
+      <div class="sidebar-footer">
+        <div class="version-tag">JafarovSecLab v1.0</div>
+      </div>
+    </aside>
+
+    <!-- Main View Content -->
+    <main id="main-content"></main>
+  </div>
+
+  <script src="/js/i18n.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

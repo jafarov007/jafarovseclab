@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SpringAdmin | Role Administration Console (Scenario 6)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #140a05; color: #e2e8f0; margin: 0; padding: 40px; }
+    .card { max-width: 650px; margin: 0 auto; background: #261208; border: 1px solid #4a210d; border-radius: 12px; padding: 30px; }
+    h2 { color: #ff7700; margin-top: 0; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; }
+    input, select { width: 100%; padding: 10px; background: #140a05; border: 1px solid #6b3012; border-radius: 6px; color: #fff; font-family: 'JetBrains Mono', monospace; }
+    button { background: #ff7700; color: #000; font-weight: 700; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+    button:hover { background: #e66a00; }
+    pre { background: #0a0502; padding: 16px; border-radius: 6px; color: #ff7700; overflow-x: auto; font-family: 'JetBrains Mono', monospace; }
+    .badge { background: rgba(255, 119, 0, 0.15); color: #ff7700; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; }
+    .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a210d; padding-bottom: 16px; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header-bar">
+      <h2>SpringAdmin Console</h2>
+      <span class="badge">Java Spring Boot 3 / v6</span>
+    </div>
+    <p style="color:#94a3b8; font-size:0.9rem;">Scenario 6: Unauthenticated Role Escalation (BFLA)</p>
+
+    <div class="form-group">
+      <label>Target user_id</label>
+      <input type="text" id="user_id" placeholder="e.g. 552450897">
+    </div>
+    <div class="form-group">
+      <label>Role Privilege Level</label>
+      <select id="role">
+        <option value="user">user</option>
+        <option value="moderator">moderator</option>
+        <option value="admin" selected>admin</option>
+      </select>
+    </div>
+    <button onclick="promoteUser()">Promote User Role</button>
+
+    <h3 style="margin-top:24px; font-size:0.95rem;">API Response Output</h3>
+    <pre id="output">// Results will appear here</pre>
+
+    <div style="margin-top:20px; text-align:right;">
+      <a href="/scenario/6/code" target="_blank" style="color:#a855f7; text-decoration:none; font-size:0.85rem; font-family:'JetBrains Mono';">🔍 Inspect Java Source Code (/code)</a>
+    </div>
+  </div>
+
+  <script>
+    async function promoteUser() {
+      const uid = document.getElementById('user_id').value;
+      const r = document.getElementById('role').value;
+      try {
+        const res = await fetch('/api/v6/admin/promote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: parseInt(uid), role: r })
+        });
+        const data = await res.json();
+        document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+      } catch(e) { document.getElementById('output').textContent = e.message; }
+    }
+  </script>
+</body>
+</html>

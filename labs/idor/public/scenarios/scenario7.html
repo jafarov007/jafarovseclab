@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GraphQL API | Schema Explorer & Playground (Scenario 7)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #14050a; color: #e2e8f0; margin: 0; padding: 40px; }
+    .card { max-width: 700px; margin: 0 auto; background: #260913; border: 1px solid #4a1225; border-radius: 12px; padding: 30px; }
+    h2 { color: #ff0055; margin-top: 0; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; }
+    textarea { width: 100%; padding: 10px; background: #14050a; border: 1px solid #6b1a35; border-radius: 6px; color: #fff; font-family: 'JetBrains Mono', monospace; }
+    button { background: #ff0055; color: #fff; font-weight: 700; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; margin-top: 10px; margin-right: 8px; }
+    button:hover { background: #e6004c; }
+    pre { background: #0a0205; padding: 16px; border-radius: 6px; color: #ff0055; overflow-x: auto; font-family: 'JetBrains Mono', monospace; }
+    .badge { background: rgba(255, 0, 85, 0.15); color: #ff0055; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; }
+    .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a1225; padding-bottom: 16px; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header-bar">
+      <h2>GraphQL Explorer</h2>
+      <span class="badge">GraphQL / v7</span>
+    </div>
+    <p style="color:#94a3b8; font-size:0.9rem;">Scenario 7: GraphQL Introspection & BOLA Mutation Playground</p>
+
+    <div class="form-group">
+      <label>GraphQL Query / Mutation</label>
+      <textarea id="query" rows="6">query Introspection {
+  __schema {
+    types {
+      name
+      fields { name args { name } }
+    }
+  }
+}</textarea>
+    </div>
+    <div class="form-group">
+      <label>Variables (JSON)</label>
+      <textarea id="variables" rows="2">{"id": 995043202}</textarea>
+    </div>
+    <button onclick="runGraphql()">Execute GraphQL Query</button>
+    <button onclick="loadMutationPreset()" style="background:#a78bfa; color:#000;">Load BOLA Mutation Preset</button>
+
+    <h3 style="margin-top:24px; font-size:0.95rem;">API Response Output</h3>
+    <pre id="output">// Results will appear here</pre>
+
+    <div style="margin-top:20px; text-align:right;">
+      <a href="/scenario/7/code" target="_blank" style="color:#a855f7; text-decoration:none; font-size:0.85rem; font-family:'JetBrains Mono';">🔍 Inspect GraphQL Schema Source (/code)</a>
+    </div>
+  </div>
+
+  <script>
+    async function runGraphql() {
+      const q = document.getElementById('query').value;
+      const v = document.getElementById('variables').value;
+      let parsedV = {};
+      try { parsedV = JSON.parse(v); } catch(e) {}
+
+      try {
+        const res = await fetch('/api/v7/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: q, variables: parsedV })
+        });
+        const data = await res.json();
+        document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+      } catch(e) { document.getElementById('output').textContent = e.message; }
+    }
+
+    function loadMutationPreset() {
+      document.getElementById('query').value = `mutation DeleteTargetUser($id: Int!) {
+  deleteUser(id: $id) {
+    success
+    deletedId
+  }
+}`;
+    }
+  </script>
+</body>
+</html>

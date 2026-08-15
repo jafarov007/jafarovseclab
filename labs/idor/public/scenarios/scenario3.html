@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>UserSettings | REST Settings API (Scenario 3)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0c0914; color: #e2e8f0; margin: 0; padding: 40px; }
+    .card { max-width: 650px; margin: 0 auto; background: #161026; border: 1px solid #271a44; border-radius: 12px; padding: 30px; }
+    h2 { color: #a855f7; margin-top: 0; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; }
+    input, select, textarea { width: 100%; padding: 10px; background: #0c0914; border: 1px solid #3b2866; border-radius: 6px; color: #fff; font-family: 'JetBrains Mono', monospace; }
+    button { background: #a855f7; color: #fff; font-weight: 700; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+    button:hover { background: #9333ea; }
+    pre { background: #07050d; padding: 16px; border-radius: 6px; color: #c084fc; overflow-x: auto; font-family: 'JetBrains Mono', monospace; }
+    .badge { background: rgba(168, 85, 247, 0.15); color: #a855f7; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; }
+    .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #271a44; padding-bottom: 16px; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header-bar">
+      <h2>UserSettings Portal</h2>
+      <span class="badge">PHP Native / v3</span>
+    </div>
+    <p style="color:#94a3b8; font-size:0.9rem;">Scenario 3: HTTP Method Tampering & Path vs Body ID Mismatch</p>
+
+    <div class="form-group">
+      <label>HTTP Method</label>
+      <select id="method">
+        <option value="GET">GET</option>
+        <option value="PUT" selected>PUT</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>URL Path ID (/api/v3/user/:id)</label>
+      <input type="text" id="path_id" placeholder="e.g. 22652">
+    </div>
+    <div class="form-group">
+      <label>Query Parameters (e.g. ?include=email,phone)</label>
+      <input type="text" id="query_params" value="include=email,phone">
+    </div>
+    <div class="form-group">
+      <label>JSON Body Payload (Supports id & _method)</label>
+      <textarea id="body" rows="4">{"id":"22651","_method":"PATCH"}</textarea>
+    </div>
+    <button onclick="sendRequest()">Send HTTP Request</button>
+
+    <h3 style="margin-top:24px; font-size:0.95rem;">API Response Output</h3>
+    <pre id="output">// Results will appear here</pre>
+
+    <div style="margin-top:20px; text-align:right;">
+      <a href="/scenario/3/code" target="_blank" style="color:#a855f7; text-decoration:none; font-size:0.85rem; font-family:'JetBrains Mono';">🔍 Inspect PHP Source Code (/code)</a>
+    </div>
+  </div>
+
+  <script>
+    async function sendRequest() {
+      const method = document.getElementById('method').value;
+      const pathId = document.getElementById('path_id').value;
+      const query = document.getElementById('query_params').value;
+      const bodyText = document.getElementById('body').value;
+
+      const url = `/api/v3/user/${pathId}${query ? '?' + query : ''}`;
+      const options = {
+        method: method,
+        headers: { 'Content-Type': 'application/json' }
+      };
+
+      if (method !== 'GET') {
+        options.body = bodyText;
+      }
+
+      try {
+        const res = await fetch(url, options);
+        const data = await res.json();
+        document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+      } catch(e) {
+        document.getElementById('output').textContent = e.message;
+      }
+    }
+  </script>
+</body>
+</html>
