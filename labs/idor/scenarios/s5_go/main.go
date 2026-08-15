@@ -64,7 +64,7 @@ var (
 )
 
 func getSessionUser(r *http.Request) (int, bool) {
-	cookie, err := r.Cookie("session_token")
+	cookie, err := r.Cookie("s5_session")
 	if err != nil {
 		return 0, false
 	}
@@ -90,7 +90,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 			if matchedUser.UserID == 995043202 {
 				token = "session_a"
 			}
-			http.SetCookie(w, &http.Cookie{Name: "session_token", Value: token, Path: "/"})
+			http.SetCookie(w, &http.Cookie{Name: "s5_session", Value: token, Path: "/"})
 			ref := r.Header.Get("Referer")
 			if ref == "" { ref = "./" }
 			http.Redirect(w, r, ref, http.StatusSeeOther)
@@ -109,7 +109,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleLogout(w http.ResponseWriter, r *http.Request) {
-	http.SetCookie(w, &http.Cookie{Name: "session_token", Value: "", Path: "/", MaxAge: -1})
+	http.SetCookie(w, &http.Cookie{Name: "s5_session", Value: "", Path: "/", MaxAge: -1})
 	ref := r.Header.Get("Referer")
 	if ref == "" { ref = "./" }
 	http.Redirect(w, r, ref, http.StatusSeeOther)

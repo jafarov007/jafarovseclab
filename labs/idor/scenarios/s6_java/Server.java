@@ -14,9 +14,10 @@ import java.util.Map;
 public class Server {
     private static final Map<Long, String> roles = new HashMap<>();
     private static final Map<String, Map<String, String>> users = new HashMap<>();
+    private static final Map<Long, Map<String, String>> usersById = new HashMap<>();
 
     static {
-        roles.put(995043202L, "admin");
+        roles.put(995043202L, "super_admin");
         roles.put(552450897L, "user");
 
         Map<String, String> userA = new HashMap<>();
@@ -25,7 +26,9 @@ public class Server {
         userA.put("user_id", "995043202");
         userA.put("name", "Alice Whitfield");
         userA.put("token", "session_a");
+        userA.put("dept", "Executive Office");
         users.put("user.a@example.com", userA);
+        usersById.put(995043202L, userA);
 
         Map<String, String> userB = new HashMap<>();
         userB.put("email", "user.b@example.com");
@@ -33,7 +36,9 @@ public class Server {
         userB.put("user_id", "552450897");
         userB.put("name", "Bob Martinez");
         userB.put("token", "session_b");
+        userB.put("dept", "Internal Logistics");
         users.put("user.b@example.com", userB);
+        usersById.put(552450897L, userB);
     }
 
     public static void main(String[] args) throws IOException {
@@ -46,9 +51,13 @@ public class Server {
         server.createContext("/s6/login", new LoginHandler());
         server.createContext("/login", new LoginHandler());
 
+        server.createContext("/api/v6/user/profile", new ProfileApiHandler());
         server.createContext("/api/v6/admin/promote", new PromoteHandler());
-        server.createContext("/code/file", new CodeFileHandler());
+        server.createContext("/scenario/6/api/v6/admin/promote", new PromoteHandler());
+        server.createContext("/scenario6/api/v6/admin/promote", new PromoteHandler());
+        server.createContext("/s6/api/v6/admin/promote", new PromoteHandler());
 
+        server.createContext("/code/file", new CodeFileHandler());
         server.createContext("/code", new CodeViewerHandler());
         server.createContext("/scenario/6/code", new CodeViewerHandler());
         server.createContext("/scenario6/code", new CodeViewerHandler());
@@ -105,12 +114,43 @@ public class Server {
         }
     }
 
+    static class ProfileApiHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            String query = exchange.getRequestURI().getQuery();
+            long reqUserId = 552450897L;
+            if (query != null && query.contains("user_id=")) {
+                try {
+                    reqUserId = Long.parseLong(query.split("user_id=")[1].split("&")[0]);
+                } catch (Exception e) {}
+            }
+
+            Map<String, String> u = usersById.get(reqUserId);
+            if (u == null) u = usersById.get(995043202L);
+
+            String userRole = roles.getOrDefault(reqUserId, "user");
+            String json = "{\"status\":\"success\",\"data\":{\"user_id\":" + reqUserId + 
+                          ",\"email\":\"" + u.get("email") + 
+                          "\",\"full_name\":\"" + u.get("name") + 
+                          "\",\"role\":\"" + userRole + 
+                          "\",\"department\":\"" + u.get("dept") + "\"}}";
+
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, bytes.length);
+            OutputStream os = exchange.getResponseBody();
+            os.write(bytes);
+            os.close();
+        }
+    }
+
     static class PromoteHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
                 String body = readBody(exchange);
                 long targetId = 552450897L;
+                String action = "promote";
 
                 if (body.contains("target_user_id")) {
                     try {
@@ -122,22 +162,43 @@ public class Server {
                             }
                         } else {
                             Map<String, String> form = parseForm(body);
-                            targetId = Long.parseLong(form.get("target_user_id"));
+                            if (form.containsKey("target_user_id")) {
+                                targetId = Long.parseLong(form.get("target_user_id"));
+                            }
+                            if (form.containsKey("action")) {
+                                action = form.get("action");
+                            }
                         }
                     } catch (Exception e) {}
                 }
 
-                roles.put(targetId, "admin");
+                if ("demote".equalsIgnoreCase(action)) {
+                    roles.put(targetId, "user");
+                } else {
+                    roles.put(targetId, "admin");
+                }
 
                 if (body.contains("{")) {
-                    String json = "{\"success\":true, \"message\":\"User " + targetId + " successfully promoted to ADMIN role!\"}";
+                    String json = "{\"success\":true, \"message\":\"User " + targetId + " updated role to " + roles.get(targetId) + "\"}";
                     exchange.getResponseHeaders().set("Content-Type", "application/json");
-                    exchange.sendResponseHeaders(200, json.length());
+                    byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+                    exchange.sendResponseHeaders(200, bytes.length);
                     OutputStream os = exchange.getResponseBody();
-                    os.write(json.getBytes(StandardCharsets.UTF_8));
+                    os.write(bytes);
                     os.close();
                 } else {
-                    exchange.getResponseHeaders().set("Location", "./?status=promoted&target=" + targetId);
+                    String ref = exchange.getRequestHeaders().getFirst("Referer");
+                    if (ref == null || ref.isEmpty()) {
+                        ref = "/scenario/6/";
+                    } else {
+                        if (ref.contains("?")) {
+                            ref = ref.substring(0, ref.indexOf("?"));
+                        }
+                    }
+                    if (!ref.endsWith("/")) {
+                        ref += "/";
+                    }
+                    exchange.getResponseHeaders().set("Location", ref + "?status=" + action + "&target=" + targetId);
                     exchange.sendResponseHeaders(303, -1);
                 }
             } else {
@@ -155,24 +216,83 @@ public class Server {
                 return;
             }
 
-            boolean isBob = "session_b".equals(session);
-            String currentName = isBob ? "Bob Martinez" : "Alice Whitfield";
-            String roleName = isBob ? "Standard Operator" : "Administrator";
+            boolean isBobSession = "session_b".equals(session);
+            long sessionUserId = isBobSession ? 552450897L : 995043202L;
+            
+            String currentRole = roles.getOrDefault(sessionUserId, "user");
+            boolean isSuperAdmin = "super_admin".equalsIgnoreCase(currentRole);
+            boolean isAdmin = "admin".equalsIgnoreCase(currentRole) || isSuperAdmin;
+
+            String currentName = isBobSession ? "Bob Martinez" : "Alice Whitfield";
+            String roleDisplay = isSuperAdmin ? "Super Admin" : (isAdmin ? "Administrator" : "Standard Operator");
 
             String query = exchange.getRequestURI().getQuery();
             String statusMsg = "";
-            if (query != null && query.contains("status=promoted")) {
-                String target = "552450897";
-                if (query.contains("target=")) {
-                    target = query.split("target=")[1].split("&")[0];
+            if (query != null) {
+                if (query.contains("status=promoted") || query.contains("status=promote")) {
+                    String target = "552450897";
+                    if (query.contains("target=")) {
+                        target = query.split("target=")[1].split("&")[0];
+                    }
+                    statusMsg = "<div class='status-msg'>✅ Privilege Change Applied for User ID: " + target + "</div>";
+                } else if (query.contains("status=demote")) {
+                    String target = "552450897";
+                    if (query.contains("target=")) {
+                        target = query.split("target=")[1].split("&")[0];
+                    }
+                    statusMsg = "<div class='status-msg'>ℹ️ Demoted User ID: " + target + " to Standard User</div>";
                 }
-                statusMsg = "<div class='status-msg'>✅ System Privilege Escalation Successful for Target ID: " + target + "</div>";
+            }
+
+            StringBuilder mainContent = new StringBuilder();
+            if (isAdmin) {
+                // Admin / Super Admin Directory View
+                mainContent.append("<div class='card'>");
+                mainContent.append("<div class='card-header'><h3 class='card-title'>Corporate Directory & Privilege Control Panel</h3></div>");
+                mainContent.append("<p style='color:#94a3b8; font-size:0.9rem;'>Executive Access Rights & Management Console</p>");
+                mainContent.append("<table class='table'><thead><tr><th>User ID</th><th>Name</th><th>Email</th><th>Assigned Role</th><th>Actions</th></tr></thead><tbody>");
+                
+                // Bob Row
+                String bobRoleStr = "admin".equals(roles.get(552450897L)) ? "<span style='color:var(--accent); font-weight:700;'>Administrator</span>" : "<span style='color:#f87171;'>Standard User</span>";
+                String bobBtn = "";
+                if (isSuperAdmin) {
+                    if ("admin".equals(roles.get(552450897L))) {
+                        bobBtn = "<form id='role-form-552450897' method='POST' action='' style='display:inline;'><script>document.getElementById('role-form-552450897').action = window.location.pathname.replace(/\\/$/, '') + '/api/v6/admin/promote';</script><input type='hidden' name='target_user_id' value='552450897'><input type='hidden' name='action' value='demote'><button type='submit' class='btn' style='background:#f87171; color:#fff;'>Demote Role</button></form>";
+                    } else {
+                        bobBtn = "<form id='role-form-552450897' method='POST' action='' style='display:inline;'><script>document.getElementById('role-form-552450897').action = window.location.pathname.replace(/\\/$/, '') + '/api/v6/admin/promote';</script><input type='hidden' name='target_user_id' value='552450897'><input type='hidden' name='action' value='promote'><button type='submit' class='btn'>Promote to Admin</button></form>";
+                    }
+                } else {
+                    bobBtn = "<button class='btn' disabled style='opacity:0.4;'>No Action</button>";
+                }
+
+                mainContent.append("<tr><td><code>552450897</code></td><td>Bob Martinez</td><td>user.b@example.com</td><td>").append(bobRoleStr).append("</td><td>").append(bobBtn).append("</td></tr>");
+                
+                // Alice Row (Super Admin)
+                mainContent.append("<tr><td><code>995043202</code></td><td>Alice Whitfield</td><td>user.a@example.com</td><td><span style='color:#a855f7; font-weight:800;'>Super Admin</span></td><td><button class='btn' disabled style='opacity:0.4;'>System Owner</button></td></tr>");
+                
+                mainContent.append("</tbody></table></div>");
+            } else {
+                // Normal User Profile View
+                mainContent.append("<div class='card'>");
+                mainContent.append("<div class='card-header'><h3 class='card-title'>User Profile & Workspace</h3></div>");
+                mainContent.append("<p style='color:#94a3b8; font-size:0.9rem;'>Personal User Profile and Account Management Dashboard</p>");
+                mainContent.append("<div class='info-grid'>");
+                mainContent.append("<div class='info-item'><div class='info-label'>User ID</div><div class='info-val'><code>552450897</code></div></div>");
+                mainContent.append("<div class='info-item'><div class='info-label'>Full Name</div><div class='info-val'>Bob Martinez</div></div>");
+                mainContent.append("<div class='info-item'><div class='info-label'>Email Address</div><div class='info-val'>user.b@example.com</div></div>");
+                mainContent.append("<div class='info-item'><div class='info-label'>Assigned Role</div><div class='info-val' style='color:#f87171;'>Standard Operator</div></div>");
+                mainContent.append("<div class='info-item'><div class='info-label'>Department</div><div class='info-val'>Internal Logistics</div></div>");
+                mainContent.append("<div class='info-item'><div class='info-label'>Access Clearance</div><div class='info-val'>Tier 1 (Standard)</div></div>");
+                mainContent.append("</div>");
+                mainContent.append("<div style='margin-top:24px; padding:14px; background:rgba(51,65,85,0.4); border-radius:8px; border:1px dashed #475569; color:#94a3b8; font-size:0.85rem;'>ℹ️ You are currently operating under standard user privileges. Role changes must be processed by Super Admin (Alice Whitfield).</div>");
+                mainContent.append("</div>");
             }
 
             String html = readFile("html/index.html");
             html = html.replace("{{CURRENT_NAME}}", currentName)
-                       .replace("{{ROLE_NAME}}", roleName)
-                       .replace("{{STATUS_MSG}}", statusMsg);
+                       .replace("{{ROLE_NAME}}", roleDisplay)
+                       .replace("{{STATUS_MSG}}", statusMsg)
+                       .replace("{{MAIN_CONTENT}}", mainContent.toString());
 
             sendHtml(exchange, html, 200);
         }
