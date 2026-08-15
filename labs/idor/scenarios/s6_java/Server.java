@@ -40,6 +40,12 @@ public class Server {
         int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8086"));
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
 
+        server.createContext("/api/v6/login", new LoginHandler());
+        server.createContext("/scenario/6/login", new LoginHandler());
+        server.createContext("/scenario6/login", new LoginHandler());
+        server.createContext("/s6/login", new LoginHandler());
+        server.createContext("/login", new LoginHandler());
+
         server.createContext("/api/v6/admin/promote", new PromoteHandler());
         server.createContext("/code/file", new CodeFileHandler());
 
@@ -74,7 +80,7 @@ public class Server {
 
                 Map<String, String> u = users.get(email);
                 if (u != null && u.get("password").equals(password)) {
-                    exchange.getResponseHeaders().set("Set-Cookie", "session_token=" + u.get("token") + "; Path=/; HttpOnly");
+                    exchange.getResponseHeaders().set("Set-Cookie", "s6_session=" + u.get("token") + "; Path=/; HttpOnly");
                     String ref = exchange.getRequestHeaders().getFirst("Referer");
                     if (ref == null) ref = "./";
                     exchange.getResponseHeaders().set("Location", ref);
@@ -91,7 +97,7 @@ public class Server {
     static class LogoutHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-            exchange.getResponseHeaders().set("Set-Cookie", "session_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
+            exchange.getResponseHeaders().set("Set-Cookie", "s6_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
             String ref = exchange.getRequestHeaders().getFirst("Referer");
             if (ref == null) ref = "./";
             exchange.getResponseHeaders().set("Location", ref);
@@ -143,7 +149,7 @@ public class Server {
     static class IndexHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-            String session = getCookieValue(exchange, "session_token");
+            String session = getCookieValue(exchange, "s6_session");
             if (session == null) {
                 new LoginHandler().handle(exchange);
                 return;

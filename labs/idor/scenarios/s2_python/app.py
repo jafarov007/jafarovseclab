@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify, render_template, redirect, session
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_wealth_key'
+app.config['SESSION_COOKIE_NAME'] = 's2_session'
 
 def init_db():
     conn = sqlite3.connect(':memory:', check_same_thread=False)
@@ -19,8 +20,8 @@ def init_db():
             role TEXT
         )
     ''')
-    cursor.execute("INSERT INTO users VALUES (1230, 'alice.ceo@corp.com', 'password123', 'Alice Whitfield', '+1-555-0101', '$4,850,000.00', 'VIP Platinum Account')")
-    cursor.execute("INSERT INTO users VALUES (123, 'bob.martinez@corp.com', 'password123', 'Bob Martinez', '+1-555-0102', '$12,450.00', 'Standard Checking')")
+    cursor.execute("INSERT INTO users VALUES (1230, 'user.a@example.com', 'password123', 'Alice Whitfield', '+1-555-0101', '$4,850,000.00', 'VIP Platinum Account')")
+    cursor.execute("INSERT INTO users VALUES (123, 'user.b@example.com', 'password123', 'Bob Martinez', '+1-555-0102', '$12,450.00', 'Standard Checking')")
     conn.commit()
     return conn
 
@@ -46,7 +47,7 @@ def index():
         email = request.form.get('email')
         password = request.form.get('password')
         cursor = db_conn.cursor()
-        cursor.execute("SELECT user_id, email FROM users WHERE (email = ? OR email = 'user.b@example.com' OR email = 'user.a@example.com') AND password = ?", (email, password))
+        cursor.execute("SELECT user_id, email FROM users WHERE email = ? AND password = ?", (email, password))
         row = cursor.fetchone()
         if row:
             session['email'] = row[1]

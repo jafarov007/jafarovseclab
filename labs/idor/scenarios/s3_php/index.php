@@ -115,7 +115,7 @@ if (preg_match('#^/api/v3/user/(\d+)$#', $uri, $matches)) {
         $body = $_POST;
     }
 
-    // Method Override Bug
+    // Handle Method Override
     $effectiveMethod = isset($body['_method']) ? strtoupper($body['_method']) : $method;
 
     if ($effectiveMethod === 'GET') {
@@ -131,7 +131,7 @@ if (preg_match('#^/api/v3/user/(\d+)$#', $uri, $matches)) {
         exit();
     }
 
-    // Path vs Body ID Mismatch Bug
+    // Handle Profile Update
     $targetId = isset($body['id']) ? (int)$body['id'] : $pathId;
     if (isset($users[$targetId])) {
         if (isset($body['full_name'])) $users[$targetId]['full_name'] = $body['full_name'];

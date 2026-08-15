@@ -25,51 +25,35 @@ db.exec(`
   CREATE TABLE auth_tokens (
     token TEXT PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    issued_at INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(user_id)
+  );
+
+  CREATE TABLE sessions (
+    session_id TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL
   );
 `);
 
-// Seed users with auto-incremented IDs (no hardcoded IDs in code)
+// Seed users with auto-incremented IDs
 db.prepare(`INSERT INTO users (email, password, full_name, phone, address, bio) VALUES (?, ?, ?, ?, ?, ?)`)
   .run('user.a@example.com', 'password123', 'Alice Whitfield', '+1-555-0101', '742 Evergreen Terrace', 'Chief Executive Officer');
 db.prepare(`INSERT INTO users (email, password, full_name, phone, address, bio) VALUES (?, ?, ?, ?, ?, ?)`)
   .run('user.b@example.com', 'password123', 'Bob Martinez', '+1-555-0102', '123 Fake Street', 'Security Researcher');
 
-const userA = db.prepare('SELECT user_id FROM users WHERE email = ?').get('user.a@example.com');
-const userB = db.prepare('SELECT user_id FROM users WHERE email = ?').get('user.b@example.com');
-
-
+// Generate a permanent, unique API token for each user at startup
 const TOKEN_SECRET = 'corp-dashboard-hmac-2024';
-const TOKEN_WINDOW_SECONDS = 30;
+const allUsers = db.prepare('SELECT user_id FROM users').all();
+for (const u of allUsers) {
+  const token = crypto.createHmac('sha256', TOKEN_SECRET)
+    .update(`permanent:${u.user_id}`).digest('hex').substring(0, 24);
+  db.prepare('INSERT INTO auth_tokens (token, user_id) VALUES (?, ?)').run(token, u.user_id);
+}
 
+// Timestamp window: rotates every 30 seconds
+const TOKEN_WINDOW_SECONDS = 30;
 function getCurrentWindow() {
   return Math.floor(Date.now() / 1000 / TOKEN_WINDOW_SECONDS);
 }
-
-function generateToken(userId, window) {
-  const payload = `${userId}:${window}`;
-  return crypto.createHmac('sha256', TOKEN_SECRET).update(payload).digest('hex').substring(0, 24);
-}
-
-// Background job: rotate auth_tokens every 30 seconds for all users
-function rotateTokens() {
-  const window = getCurrentWindow();
-  const allUsers = db.prepare('SELECT user_id FROM users').all();
-
-  const deleteStmt = db.prepare('DELETE FROM auth_tokens WHERE user_id = ?');
-  const insertStmt = db.prepare('INSERT OR REPLACE INTO auth_tokens (token, user_id, issued_at) VALUES (?, ?, ?)');
-
-  for (const u of allUsers) {
-    deleteStmt.run(u.user_id);
-    const token = generateToken(u.user_id, window);
-    insertStmt.run(token, u.user_id, window);
-  }
-}
-
-// Initial rotation + schedule every 30 seconds
-rotateTokens();
-setInterval(rotateTokens, TOKEN_WINDOW_SECONDS * 1000);
 
 // ─── Middleware ──────────────────────────────────────────────────
 app.use((req, res, next) => {
@@ -98,19 +82,16 @@ app.get('/api/v1/user/profile', (req, res) => {
     return res.status(400).json({ error: 'Missing user_id, auth_token, or timestamp' });
   }
 
-  // Step 1: Verify the token exists and is currently valid
   const tokenRecord = db.prepare('SELECT * FROM auth_tokens WHERE token = ?').get(auth_token);
   if (!tokenRecord) {
-    return res.status(401).json({ error: 'Invalid or expired authentication token' });
+    return res.status(401).json({ error: 'Invalid authentication token' });
   }
 
-  // Step 2: Verify timestamp is within the current window
   const currentWindow = getCurrentWindow();
   const providedWindow = parseInt(timestamp, 10);
   if (Math.abs(currentWindow - providedWindow) > 1) {
     return res.status(403).json({ error: 'Token timestamp expired. Refresh your session.' });
   }
-
 
   const user = db.prepare('SELECT user_id, email, full_name, phone, address, bio FROM users WHERE user_id = ?')
     .get(parseInt(user_id, 10));
@@ -133,7 +114,6 @@ app.post('/api/v1/login', (req, res) => {
     .update(`session:${user.user_id}:${Date.now()}`).digest('hex').substring(0, 16);
 
   // Store session mapping
-  db.exec(`CREATE TABLE IF NOT EXISTS sessions (session_id TEXT PRIMARY KEY, user_id INTEGER)`);
   db.prepare('INSERT OR REPLACE INTO sessions (session_id, user_id) VALUES (?, ?)').run(sessionValue, user.user_id);
 
   res.setHeader('Set-Cookie', `session_token=${sessionValue}; Path=/; HttpOnly`);
@@ -162,7 +142,6 @@ app.get(['/', '/scenario/1', '/scenario1', '/s1'], (req, res) => {
   }
 
   // Look up session in DB
-  db.exec(`CREATE TABLE IF NOT EXISTS sessions (session_id TEXT PRIMARY KEY, user_id INTEGER)`);
   const sessionRecord = db.prepare('SELECT user_id FROM sessions WHERE session_id = ?').get(session);
   if (!sessionRecord) {
     res.setHeader('Set-Cookie', 'session_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT');
@@ -176,14 +155,14 @@ app.get(['/', '/scenario/1', '/scenario1', '/s1'], (req, res) => {
     return res.send(loginHtml);
   }
 
-  // Get the user's current rotating token and timestamp window
+  // Get the user's permanent token from DB and current timestamp window
+  const userToken = db.prepare('SELECT token FROM auth_tokens WHERE user_id = ?').get(currentUser.user_id);
   const currentWindow = getCurrentWindow();
-  const currentToken = generateToken(currentUser.user_id, currentWindow);
 
   let indexHtml = fs.readFileSync(path.join(__dirname, 'views', 'index.html'), 'utf-8');
   indexHtml = indexHtml.replace('{{USER_NAME}}', currentUser.full_name)
     .replace('{{USER_ID}}', currentUser.user_id)
-    .replace('{{USER_TOKEN}}', currentToken)
+    .replace('{{USER_TOKEN}}', userToken.token)
     .replace('{{TIMESTAMP}}', currentWindow);
   res.send(indexHtml);
 });

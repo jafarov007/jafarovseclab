@@ -44,7 +44,7 @@ const parseCookies = (cookieHeader) => {
   return list;
 };
 
-// Vulnerable Method Override API Handler
+// Method Override API Handler
 app.all('/api/v4/user/profile', (req, res) => {
   let method = req.method;
   if (req.headers['x-http-method-override']) {
@@ -57,7 +57,8 @@ app.all('/api/v4/user/profile', (req, res) => {
 
   if (method === 'GET') {
     const cookies = parseCookies(req.headers.cookie);
-    const session = cookies['session_token'];
+    const session = cookies['s4_session'];
+    if (!session) return res.status(401).json({ error: 'Unauthorized' });
     user_id = session === 'session_b' ? 552450897 : 995043202;
     return res.json({ success: true, data: userProfiles[user_id] });
   }
@@ -92,7 +93,7 @@ app.post('/api/v4/login', (req, res) => {
   const { email, password } = req.body;
   if ((email === 'user.b@example.com' || email === 'user.a@example.com') && password === 'password123') {
     const sessionToken = email === 'user.b@example.com' ? 'session_b' : 'session_a';
-    res.setHeader('Set-Cookie', `session_token=${sessionToken}; Path=/; HttpOnly`);
+    res.setHeader('Set-Cookie', `s4_session=${sessionToken}; Path=/; HttpOnly`);
     return res.json({ success: true });
   }
   res.status(401).json({ error: 'Invalid credentials' });
@@ -100,7 +101,7 @@ app.post('/api/v4/login', (req, res) => {
 
 // Logout API
 app.get(['/logout', '/scenario/4/logout', '/scenario4/logout', '/s4/logout'], (req, res) => {
-  res.setHeader('Set-Cookie', 'session_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT');
+  res.setHeader('Set-Cookie', 's4_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT');
   const ref = req.headers['referer'] || './';
   res.redirect(ref);
 });
@@ -108,7 +109,7 @@ app.get(['/logout', '/scenario/4/logout', '/scenario4/logout', '/s4/logout'], (r
 // Serve Web UI
 app.get(['/', '/scenario/4', '/scenario4', '/s4'], (req, res) => {
   const cookies = parseCookies(req.headers.cookie);
-  const session = cookies['session_token'];
+  const session = cookies['s4_session'];
 
   if (!session) {
     const loginHtml = fs.readFileSync(path.join(__dirname, 'public', 'login.html'), 'utf-8');
