@@ -85,13 +85,11 @@ if ($route === '/login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user_role'] = $user['role'];
         $_SESSION['user_name'] = $user['name'];
 
-        $basePath = (strpos($uri, '/scenario/3') === 0) ? '/scenario/3' : ((strpos($uri, '/s3') === 0) ? '/s3' : '');
-        header("Location: " . $basePath . "/dashboard");
+        header("Location: dashboard");
         exit;
     } else {
         $_SESSION['error'] = 'Invalid email or password.';
-        $basePath = (strpos($uri, '/scenario/3') === 0) ? '/scenario/3' : ((strpos($uri, '/s3') === 0) ? '/s3' : '');
-        header("Location: " . $basePath . "/");
+        header("Location: ./");
         exit;
     }
 }
@@ -99,8 +97,7 @@ if ($route === '/login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 // Logout
 if ($route === '/logout') {
     session_destroy();
-    $basePath = (strpos($uri, '/scenario/3') === 0) ? '/scenario/3' : ((strpos($uri, '/s3') === 0) ? '/s3' : '');
-    header("Location: " . $basePath . "/");
+    header("Location: ./");
     exit;
 }
 
@@ -109,8 +106,7 @@ if ($route === '/admin/clear-logs' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (($_SESSION['user_role'] ?? '') === 'Admin') {
         $db->exec("DELETE FROM activity_logs");
     }
-    $basePath = (strpos($uri, '/scenario/3') === 0) ? '/scenario/3' : ((strpos($uri, '/s3') === 0) ? '/s3' : '');
-    header("Location: " . $basePath . "/admin");
+    header("Location: admin");
     exit;
 }
 
@@ -186,7 +182,7 @@ if ($route === '/code') {
           document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
           el.classList.add('active');
           document.getElementById('editor-header').textContent = name;
-          const res = await fetch(basePath + '/code/file?name=' + encodeURIComponent(name));
+          const res = await fetch('code/file?name=' + encodeURIComponent(name));
           const text = await res.text();
           const codeBlock = document.getElementById('code-block');
           codeBlock.textContent = text;
@@ -248,9 +244,9 @@ if ($route === '/dashboard') {
         <div class="user-info">
           <span><?= htmlspecialchars($userName) ?> (<strong><?= htmlspecialchars($userRole) ?></strong>)</span>
           <?php if ($userRole === 'Admin'): ?>
-            <a href="<?= $basePath ?>/admin" class="btn-sm btn-admin">⚙️ Admin Logs</a>
+            <a href="admin" class="btn-sm btn-admin">⚙️ Admin Logs</a>
           <?php endif; ?>
-          <a href="<?= $basePath ?>/logout" class="btn-sm">Logout</a>
+          <a href="logout" class="btn-sm">Logout</a>
         </div>
       </header>
       <main>
@@ -285,7 +281,7 @@ if ($route === '/dashboard') {
 
         function trackPageVisit(pageId) {
           $.ajax({
-            url: basePath + '/api/v1/track-page',
+            url: 'api/v1/track-page',
             method: 'POST',
             data: {
               page: pageId,
@@ -354,8 +350,8 @@ if ($route === '/admin') {
           <p style="color: var(--muted); font-size: 0.85rem; margin-top: 4px;">System activity, header metadata, and visitor navigation records.</p>
         </div>
         <div>
-          <a href="<?= $basePath ?>/dashboard" class="btn-sm">← Back to Portal</a>
-          <form action="<?= $basePath ?>/admin/clear-logs" method="POST" style="display:inline-block; margin-left: 8px;">
+          <a href="dashboard" class="btn-sm">← Back to Portal</a>
+          <form action="admin/clear-logs" method="POST" style="display:inline-block; margin-left: 8px;">
             <button type="submit" class="btn-sm btn-danger">Clear All Logs</button>
           </form>
         </div>
@@ -436,7 +432,7 @@ if ($route === '/admin') {
       <div class="error-box"><?= htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?></div>
     <?php endif; ?>
 
-    <form action="<?= $basePath ?>/login" method="POST">
+    <form action="login" method="POST">
       <div class="form-group">
         <label>Email Address</label>
         <input type="email" name="email" value="user.a@example.com" required>

@@ -57,6 +57,18 @@ def catch_all(path):
     if not rel_path or rel_path == '':
         rel_path = '/'
 
+    # Normalize trailing slash
+    if rel_path.endswith('/code/file'):
+        rel_path = '/code/file'
+    elif rel_path.endswith('/code'):
+        rel_path = '/code'
+    elif rel_path.endswith('/login'):
+        rel_path = '/login'
+    elif rel_path.endswith('/logout'):
+        rel_path = '/logout'
+    elif rel_path.endswith('/dashboard'):
+        rel_path = '/dashboard'
+
     # Route: Code file viewer
     if rel_path == '/code/file':
         filename = request.args.get('name', '')
@@ -79,18 +91,18 @@ def catch_all(path):
         if email == user_data['email'] and password == user_data['password']:
             session['authenticated'] = True
             session['email'] = email
-            return redirect(base_path + '/dashboard')
+            return redirect('dashboard')
         else:
             session['error'] = 'Invalid email or password.'
-            return redirect(base_path + '/')
+            return redirect('./')
 
     # Route: Logout
     if rel_path == '/logout':
         session.clear()
-        return redirect(base_path + '/')
+        return redirect('./')
 
     # Route: Add Comment POST
-    if rel_path == '/api/v1/comments' and request.method == 'POST':
+    if rel_path.endswith('/api/v1/comments') and request.method == 'POST':
         if not session.get('authenticated'):
             return jsonify({'error': 'Unauthorized'}), 401
         content = request.form.get('content', '') or (request.json.get('content', '') if request.is_json else '')
@@ -103,7 +115,7 @@ def catch_all(path):
         return jsonify({'success': True, 'content': cleaned_content})
 
     # Route: Update Website POST
-    if rel_path == '/api/v1/profile/website' and request.method == 'POST':
+    if rel_path.endswith('/api/v1/profile/website') and request.method == 'POST':
         if not session.get('authenticated'):
             return jsonify({'error': 'Unauthorized'}), 401
         new_url = request.form.get('website', '') or (request.json.get('website', '') if request.is_json else '')
@@ -114,10 +126,12 @@ def catch_all(path):
     # Route: Dashboard
     if rel_path == '/dashboard':
         if not session.get('authenticated'):
-            return redirect(base_path + '/')
+            return redirect('./')
         return render_template('dashboard.html', user=user_data, comments=comments, base_path=base_path)
 
     # Route: Login Page (Default)
+    if session.get('authenticated'):
+        return render_template('dashboard.html', user=user_data, comments=comments, base_path=base_path)
     error_msg = session.pop('error', None)
     return render_template('login.html', error_msg=error_msg, base_path=base_path)
 

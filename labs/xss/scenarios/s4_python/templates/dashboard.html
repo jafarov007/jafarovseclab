@@ -49,7 +49,7 @@
     <div class="brand">💬 DevHub Community Portal</div>
     <div class="user-info">
       <span>{{ user.name }}</span>
-      <a href="{{ base_path }}/logout" class="btn-sm">Logout</a>
+      <a href="logout" class="btn-sm">Logout</a>
     </div>
   </header>
 
@@ -114,13 +114,11 @@
   </main>
 
   <script>
-    const basePath = "{{ base_path }}";
-
     $('#comment-form').on('submit', function(e) {
       e.preventDefault();
       const content = $('#comment-input').val();
       $.ajax({
-        url: basePath + '/api/v1/comments',
+        url: 'api/v1/comments',
         method: 'POST',
         data: { content: content },
         success: function(res) {
@@ -135,7 +133,7 @@
       e.preventDefault();
       const url = $('#website-input').val();
       $.ajax({
-        url: basePath + '/api/v1/profile/website',
+        url: 'api/v1/profile/website',
         method: 'POST',
         data: { website: url },
         success: function(res) {

@@ -45,7 +45,7 @@ const I18N = {
     xss_s3_obj: 'Inject XSS payloads into X-Real-IP HTTP header or http_referrer_url POST parameter to trigger stored XSS when Admin views activity logs.',
     xss_s4_title: '4. Python Flask Filter Bypass & JavaScript Pseudo-Protocol XSS',
     xss_s4_desc: 'The application uses single-pass non-recursive tag stripping on forum comments and fails to validate URI schemes on user profile website links.',
-    xss_s4_obj: '1. Bypass single-pass stripping using nested tags (<scr<script>ipt>prompt(1)</scr<script>ipt> or <img/s<script>rc<script>/oner<script>ror=prompt(8)>).\n2. Inject javascript: pseudo-protocol into website URL (javascript:prompt(1)).',
+    xss_s4_obj: '1. Bypass single-pass stripping using nested tags (&lt;scr&lt;script&gt;ipt&gt;prompt(1)&lt;/scr&lt;script&gt;ipt&gt; or &lt;img/s&lt;script&gt;rc&lt;script&gt;/oner&lt;script&gt;ror=prompt(8)&gt;).<br>2. Inject javascript: pseudo-protocol into website URL (javascript:prompt(1)).',
 
     terminal_title: 'Container Setup Log',
     setup_step_1: 'Booting isolated service containers...',
@@ -148,7 +148,7 @@ const I18N = {
     xss_s3_obj: 'X-Real-IP HTTP başlığı veya http_referrer_url POST parametresi üzerinden XSS payload\'ı enjekte edin ve Admin güvenlik loglarını incelerken zararlı kodun çalışmasını sağlayın.',
     xss_s4_title: '4. Python Flask Filtre Bypass & JavaScript Pseudo-Protocol XSS',
     xss_s4_desc: 'Uygulama forum yorumlarında tek geçişli özyinelemesiz etiket temizleme kullanır ve profil web sitesi bağlantısında URI şemasını doğrulamaz.',
-    xss_s4_obj: '1. İç içe etiketler kullanarak tek geçişli filtreyi atlatın (<scr<script>ipt>prompt(1)</scr<script>ipt> veya <img/s<script>rc<script>/oner<script>ror=prompt(8)>).\n2. Web sitesi bağlantısına javascript: protokolü enjekte edin (javascript:prompt(1)).',
+    xss_s4_obj: '1. İç içe etiketler kullanarak tek geçişli filtreyi atlatın (&lt;scr&lt;script&gt;ipt&gt;prompt(1)&lt;/scr&lt;script&gt;ipt&gt; veya &lt;img/s&lt;script&gt;rc&lt;script&gt;/oner&lt;script&gt;ror=prompt(8)&gt;).<br>2. Web sitesi bağlantısına javascript: protokolü enjekte edin (javascript:prompt(1)).',
 
     terminal_title: 'Konteyner Kurulum Logu',
     setup_step_1: 'Izole servis konteynerleri baslatiliyor...',

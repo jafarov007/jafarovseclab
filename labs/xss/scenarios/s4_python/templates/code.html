@@ -46,7 +46,7 @@
       document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
       el.classList.add('active');
       document.getElementById('editor-header').textContent = name;
-      const res = await fetch(basePath + '/code/file?name=' + encodeURIComponent(name));
+      const res = await fetch('code/file?name=' + encodeURIComponent(name));
       const text = await res.text();
       const codeBlock = document.getElementById('code-block');
       codeBlock.textContent = text;
