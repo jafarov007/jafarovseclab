@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UserProfile - Corporate Identity Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0a0c;
+      --bg-card: #121215;
+      --bg-input: #1a1a1e;
+      --border-color: #27272a;
+      --border-focus: #52525b;
+      --text-primary: #f4f4f5;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --accent-blue: #38bdf8;
+      --green-text: #34d399;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--accent-blue);
+      color: #000;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .container {
+      width: 100%;
+      max-width: 460px;
+    }
+
+    .profile-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 32px;
+    }
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+    }
+    .display-name {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+    .user-role {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .form-input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus {
+      border-color: var(--border-focus);
+    }
+
+    .char-counter {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: none;
+      background: var(--text-primary);
+      color: var(--bg-primary);
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      background: #e4e4e7;
+    }
+
+    .status-msg {
+      margin-top: 16px;
+      font-size: 0.85rem;
+      padding: 10px 14px;
+      border-radius: 6px;
+      display: none;
+    }
+    .status-msg.success {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid var(--green-text);
+      color: var(--green-text);
+    }
+    .status-msg.error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid #ef4444;
+      color: #ef4444;
+    }
+
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding: 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+  </style>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-icon">J</div>
+      <span>UserProfile Portal</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="profile-card">
+        <div class="profile-header">
+          <div class="avatar">👤</div>
+          <div>
+            <div class="display-name" id="user-name-display">Loading...</div>
+            <div class="user-role" id="user-role-display">Security Engineer</div>
+          </div>
+        </div>
+
+        <form id="update-name-form">
+          <div class="form-group">
+            <label class="form-label">Display Name</label>
+            <input type="text" id="name-input" class="form-input" maxlength="60" placeholder="Enter new display name">
+            <div class="char-counter">
+              <span>Limit: 60 characters</span>
+              <span id="counter-text">0 / 60</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn">Update Profile Name</button>
+        </form>
+
+        <div id="status-box" class="status-msg"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    UserProfile Security Portal © 2026 • JafarovSecLab
+  </footer>
+
+  <script>
+    $(document).ready(function () {
+      function loadProfile() {
+        $.ajax({
+          url: 'api/v1/profile',
+          method: 'GET',
+          success: function (data) {
+            $('#user-name-display').html(data.name);
+            $('#user-role-display').text(data.role);
+            $('#name-input').val(data.name);
+            updateCounter();
+          }
+        });
+      }
+
+      function updateCounter() {
+        var len = $('#name-input').val().length;
+        $('#counter-text').text(len + ' / 60');
+      }
+
+      $('#name-input').on('input', updateCounter);
+
+      $('#update-name-form').on('submit', function (e) {
+        e.preventDefault();
+        var newName = $('#name-input').val();
+
+        $('#status-box').hide().removeClass('success error');
+
+        $.ajax({
+          url: 'api/v1/update-name',
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ name: newName }),
+          success: function (res) {
+            if (res.success) {
+              $('#user-name-display').html(res.user.name);
+              $('#status-box').addClass('success').text('Profile name updated successfully.').fadeIn();
+            }
+          },
+          error: function (xhr) {
+            var msg = 'Failed to update name.';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+              msg = xhr.responseJSON.error;
+            }
+            $('#status-box').addClass('error').text(msg).fadeIn();
+          }
+        });
+      });
+
+      loadProfile();
+    });
+  </script>
+</body>
+</html>

@@ -7,8 +7,8 @@
   const state = {
     labs: [],
     activeLab: localStorage.getItem('jafarov_active_lab') || null,
-    labStarted: false,
-    labData: null,
+    labStarted: {},
+    labData: {},
   };
 
   const mainContent = document.getElementById('main-content');
@@ -21,15 +21,13 @@
 
   async function init() {
     await loadLabs();
-    await checkActiveLabStatus(); // Check state on page refresh!
+    if (state.activeLab) {
+      await checkActiveLabStatus(state.activeLab);
+    }
     renderSidebar();
 
     if (state.activeLab) {
       renderLabDetail(state.activeLab);
-    } else if (state.labStarted) {
-      state.activeLab = 'idor';
-      localStorage.setItem('jafarov_active_lab', 'idor');
-      renderLabDetail('idor');
     } else {
       renderWelcome();
     }
@@ -49,23 +47,29 @@
     }
   }
 
+  let selectSeq = 0;
+
   // State Persistence Check on Browser Load / Refresh
-  async function checkActiveLabStatus() {
+  async function checkActiveLabStatus(labId) {
+    const target = labId || state.activeLab || 'idor';
     try {
-      const res = await fetch('/api/labs/idor/status');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const res = await fetch(`/api/labs/${target}/status`, { signal: controller.signal });
+      clearTimeout(timeoutId);
       const data = await res.json();
       if (data && (data.status === 'running' || data.initialized)) {
-        state.labStarted = true;
-        state.labData = data;
-        setStatus('running');
+        state.labStarted[target] = true;
+        state.labData[target] = data;
+        if (target === state.activeLab) setStatus('running');
       } else {
-        state.labStarted = false;
-        state.labData = null;
-        setStatus('idle');
+        state.labStarted[target] = false;
+        state.labData[target] = null;
+        if (target === state.activeLab) setStatus('idle');
       }
     } catch (err) {
-      state.labStarted = false;
-      setStatus('idle');
+      state.labStarted[target] = false;
+      if (target === state.activeLab) setStatus('idle');
     }
   }
 
@@ -150,23 +154,24 @@
   }
 
   function renderLabDetail(labId) {
-    if (labId !== 'idor') return;
     const lab = state.labs.find(l => l.id === labId);
     if (!lab) return;
 
     const name = currentLang === 'tr' ? lab.name_tr : lab.name_en;
+    const isStarted = !!state.labStarted[labId];
+    const descKey = labId === 'idor' ? 'lab_description_idor' : labId === 'xss' ? 'lab_description_xss' : '';
 
     let html = `
       <div class="lab-detail">
         <div class="lab-header">
           <div class="lab-header-info">
             <h1 class="lab-title">${lab.icon} ${name}</h1>
-            <p class="lab-description">${t('lab_description_idor')}</p>
+            <p class="lab-description">${t(descKey)}</p>
           </div>
           <div class="lab-actions-group">
     `;
 
-    if (!state.labStarted) {
+    if (!isStarted) {
       html += `
         <button class="btn btn-primary" id="btn-start-lab" onclick="startLab('${labId}')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -189,8 +194,8 @@
     html += `</div></div>`;
     html += `<div id="setup-terminal-area"></div>`;
 
-    if (state.labStarted) {
-      html += renderScenarios();
+    if (isStarted) {
+      html += renderScenarios(labId);
     }
 
     html += `</div>`;
@@ -239,8 +244,8 @@
     try {
       const res = await fetch(`/api/labs/${labId}/start`, { method: 'POST' });
       const data = await res.json();
-      state.labData = data;
-      state.labStarted = true;
+      state.labData[labId] = data;
+      state.labStarted[labId] = true;
 
       output.innerHTML += `<div class="terminal-line"><span class="success">✅ ${t('setup_complete')}</span></div>`;
 
@@ -261,8 +266,8 @@
     } catch (err) {
       console.error('Stop error:', err);
     }
-    state.labStarted = false;
-    state.labData = null;
+    state.labStarted[labId] = false;
+    state.labData[labId] = null;
     setStatus('idle');
     renderLabDetail(labId);
   }
@@ -285,29 +290,39 @@
       console.error('Delete error:', err);
     }
 
-    state.labStarted = false;
-    state.labData = null;
+    state.labStarted[labId] = false;
+    state.labData[labId] = null;
     setStatus('idle');
     renderLabDetail(labId);
   }
 
-  function renderScenarios() {
-    const scenarios = [
-      { num: 1, key: 's1', lang: 'Node.js', langClass: 'node', subdomain: 's1.idor.lab.local', port: 8081, endpoint: 'GET /api/v1/user/profile' },
-      { num: 2, key: 's2', lang: 'Python', langClass: 'python', subdomain: 's2.idor.lab.local', port: 8082, endpoint: 'GET /api/v2/user/profile?user_id=...' },
-      { num: 3, key: 's3', lang: 'PHP', langClass: 'php', subdomain: 's3.idor.lab.local', port: 8083, endpoint: 'PUT /api/v3/user/:id' },
-      { num: 4, key: 's4', lang: 'Node.js', langClass: 'node', subdomain: 's4.idor.lab.local', port: 8084, endpoint: 'POST /api/v4/user/avatar' },
-      { num: 5, key: 's5', lang: 'Go', langClass: 'go', subdomain: 's5.idor.lab.local', port: 8085, endpoint: 'POST /api/v5/confirm-reset' },
-      { num: 6, key: 's6', lang: 'Java', langClass: 'java', subdomain: 's6.idor.lab.local', port: 8086, endpoint: 'POST /api/v6/admin/promote' },
-      { num: 7, key: 's7', lang: 'GraphQL', langClass: 'graphql', subdomain: 's7.idor.lab.local', port: 8087, endpoint: 'POST /api/v7/graphql' },
-      { num: 8, key: 's8', lang: 'Python', langClass: 'python', subdomain: 's8.idor.lab.local', port: 8088, endpoint: 'GET /api/v8/user/profile' },
-    ];
+  function renderScenarios(labId) {
+    let scenarios = [];
+    if (labId === 'idor') {
+      scenarios = [
+        { num: 1, key: 's1', lang: 'Node.js', langClass: 'node', subdomain: 's1.idor.lab.local', port: 8081, gatewayPort: 8080, labDomain: 'idor.lab.local' },
+        { num: 2, key: 's2', lang: 'Python', langClass: 'python', subdomain: 's2.idor.lab.local', port: 8082, gatewayPort: 8080, labDomain: 'idor.lab.local' },
+        { num: 3, key: 's3', lang: 'PHP', langClass: 'php', subdomain: 's3.idor.lab.local', port: 8083, gatewayPort: 8080, labDomain: 'idor.lab.local' },
+        { num: 4, key: 's4', lang: 'Node.js', langClass: 'node', subdomain: 's4.idor.lab.local', port: 8084, gatewayPort: 8080, labDomain: 'idor.lab.local' },
+        { num: 5, key: 's5', lang: 'Go', langClass: 'go', subdomain: 's5.idor.lab.local', port: 8085, gatewayPort: 8080, labDomain: 'idor.lab.local' },
+        { num: 6, key: 's6', lang: 'Java', langClass: 'java', subdomain: 's6.idor.lab.local', port: 8086, gatewayPort: 8080, labDomain: 'idor.lab.local' },
+        { num: 7, key: 's7', lang: 'GraphQL', langClass: 'graphql', subdomain: 's7.idor.lab.local', port: 8087, gatewayPort: 8080, labDomain: 'idor.lab.local' },
+        { num: 8, key: 's8', lang: 'Python', langClass: 'python', subdomain: 's8.idor.lab.local', port: 8088, gatewayPort: 8080, labDomain: 'idor.lab.local' },
+      ];
+    } else if (labId === 'xss') {
+      scenarios = [
+        { num: 1, key: 'xss_s1', lang: 'Vue.js', langClass: 'node', subdomain: 's1.xss.lab.local', port: 9081, gatewayPort: 9080, labDomain: 'xss.lab.local' },
+        { num: 2, key: 'xss_s2', lang: 'jQuery', langClass: 'node', subdomain: 's2.xss.lab.local', port: 9082, gatewayPort: 9080, labDomain: 'xss.lab.local' },
+        { num: 3, key: 'xss_s3', lang: 'PHP', langClass: 'php', subdomain: 's3.xss.lab.local', port: 9083, gatewayPort: 9080, labDomain: 'xss.lab.local' },
+        { num: 4, key: 'xss_s4', lang: 'Python', langClass: 'python', subdomain: 's4.xss.lab.local', port: 9084, gatewayPort: 9080, labDomain: 'xss.lab.local' },
+      ];
+    }
 
     let html = `
       <div class="scenarios-section">
         <div class="scenarios-title">
           📋 ${t('scenarios_title')}
-          <span class="scenarios-count">8 Scenarios</span>
+          <span class="scenarios-count">${scenarios.length} Scenario${scenarios.length > 1 ? 's' : ''}</span>
         </div>
     `;
 
@@ -325,7 +340,7 @@
           </div>
           <div class="scenario-body">
             <div class="scenario-content">
-              ${renderScenarioDetails(sc)}
+              ${renderScenarioDetails(sc, labId)}
             </div>
           </div>
         </div>
@@ -336,14 +351,14 @@
     return html;
   }
 
-  function renderScenarioDetails(sc) {
-    const userA = { email: 'user.a@example.com', user_id: '995043202' };
-    const userB = { email: 'user.b@example.com', user_id: '552450897' };
+  function renderScenarioDetails(sc, labId) {
+    const gatewayPort = sc.gatewayPort || 8080;
+    const labDomain = sc.labDomain || 'idor.lab.local';
 
-    const subdomainUrl = `http://${sc.subdomain}:8080`;
+    const subdomainUrl = `http://${sc.subdomain}:${gatewayPort}`;
     const directPortUrl = `http://localhost:${sc.port}`;
-    const fallbackPathUrl = `http://localhost:8080/scenario/${sc.num}`;
-    const codeUrl = `http://localhost:8080/scenario/${sc.num}/code`;
+    const fallbackPathUrl = `http://localhost:${gatewayPort}/scenario/${sc.num}`;
+    const codeUrl = `http://localhost:${gatewayPort}/scenario/${sc.num}/code`;
 
     let html = `
       <div class="scenario-section">
@@ -372,25 +387,46 @@
       <div class="scenario-section">
         <div class="scenario-section-title">${t('label_hosts_entry')}</div>
         <div class="info-box">
-          <div class="value orange">127.0.0.1    ${sc.subdomain} idor.lab.local</div>
-        </div>
-      </div>
-      <div class="scenario-section">
-        <div class="scenario-section-title">${t('label_credentials')}</div>
-        <div class="credential-grid">
-          <div class="info-box">
-            <div class="label">${t('label_user_a')} [ID: ${userA.user_id}]</div>
-            <div class="value">${t('label_email')}: ${userA.email}</div>
-            <div class="value">${t('label_password')}: password123</div>
-          </div>
-          <div class="info-box">
-            <div class="label">${t('label_user_b')} [ID: ${userB.user_id}]</div>
-            <div class="value">${t('label_email')}: ${userB.email}</div>
-            <div class="value">${t('label_password')}: password123</div>
-          </div>
+          <div class="value orange">127.0.0.1    ${sc.subdomain} ${labDomain}</div>
         </div>
       </div>
     `;
+
+    if (labId === 'idor') {
+      const userA = { email: 'user.a@example.com', user_id: '995043202' };
+      const userB = { email: 'user.b@example.com', user_id: '552450897' };
+      html += `
+        <div class="scenario-section">
+          <div class="scenario-section-title">${t('label_credentials')}</div>
+          <div class="credential-grid">
+            <div class="info-box">
+              <div class="label">${t('label_user_a')} [ID: ${userA.user_id}]</div>
+              <div class="value">${t('label_email')}: ${userA.email}</div>
+              <div class="value">${t('label_password')}: password123</div>
+            </div>
+            <div class="info-box">
+              <div class="label">${t('label_user_b')} [ID: ${userB.user_id}]</div>
+              <div class="value">${t('label_email')}: ${userB.email}</div>
+              <div class="value">${t('label_password')}: password123</div>
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      const userA = { email: 'user.a@example.com' };
+      html += `
+        <div class="scenario-section">
+          <div class="scenario-section-title">${t('label_credentials')}</div>
+          <div class="credential-grid">
+            <div class="info-box">
+              <div class="label">Test Account</div>
+              <div class="value">${t('label_email')}: ${userA.email}</div>
+              <div class="value">${t('label_password')}: password123</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
 
     html += `
       <div class="scenario-links-row">
@@ -435,10 +471,21 @@
   }
 
   window.selectLab = function (labId) {
+    const mySeq = ++selectSeq;
     state.activeLab = labId;
     localStorage.setItem('jafarov_active_lab', labId);
+
+    // 1. Render UI INSTANTLY (0ms response time!)
     renderSidebar();
     renderLabDetail(labId);
+
+    // 2. Fetch status in background and update badge cleanly without full re-render loop
+    checkActiveLabStatus(labId).then(() => {
+      if (mySeq === selectSeq && state.activeLab === labId) {
+        renderSidebar();
+        setStatus(state.labStarted[labId] ? 'running' : 'idle');
+      }
+    });
   };
 
   window.toggleScenario = function (num) {

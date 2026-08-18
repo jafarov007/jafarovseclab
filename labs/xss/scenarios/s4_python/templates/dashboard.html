@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevHub Community Portal | Scenario 4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #0a0a0c; --card: #121215; --border: #27272a; --text: #f4f4f5; --accent: #38bdf8; --muted: #a1a1aa; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    header { background: var(--card); border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+    .brand { font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
+    .user-info { display: flex; align-items: center; gap: 16px; font-size: 0.9rem; }
+    .btn-sm { padding: 6px 12px; background: #27272a; color: #fff; text-decoration: none; border-radius: 6px; font-size: 0.85rem; border: none; cursor: pointer; }
+    .btn-sm:hover { background: #3f3f46; }
+    main { flex: 1; max-width: 960px; width: 100%; margin: 30px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 300px; gap: 24px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+    .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+    
+    /* Profile Panel */
+    .profile-box { text-align: center; }
+    .avatar { width: 64px; height: 64px; border-radius: 50%; background: #1a1a1e; border: 1px solid var(--border); margin: 0 auto 12px auto; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
+    .profile-name { font-weight: 700; font-size: 1.1rem; }
+    .profile-role { color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; }
+    .website-link { display: inline-block; color: var(--accent); font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; word-break: break-all; margin-top: 8px; text-decoration: none; border: 1px dashed var(--border); padding: 6px 12px; border-radius: 6px; width: 100%; }
+    
+    /* Forms */
+    .form-group { margin-bottom: 14px; text-align: left; }
+    label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; }
+    input[type="text"], textarea { width: 100%; background: #1a1a1e; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-family: inherit; font-size: 0.9rem; outline: none; }
+    input:focus, textarea:focus { border-color: var(--accent); }
+    .btn { width: 100%; padding: 10px; background: var(--text); color: var(--bg); border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .btn:hover { background: #e4e4e7; }
+    
+    /* Comment Feed */
+    .comment-item { background: #18181b; border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 14px; }
+    .comment-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; }
+    .comment-author { font-weight: 700; color: var(--accent); }
+    .comment-time { color: var(--muted); font-size: 0.75rem; }
+    .comment-body { font-size: 0.9rem; line-height: 1.5; color: #d4d4d8; }
+  </style>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="brand">💬 DevHub Community Portal</div>
+    <div class="user-info">
+      <span>{{ user.name }}</span>
+      <a href="{{ base_path }}/logout" class="btn-sm">Logout</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- Left Column: Discussion Board -->
+    <div>
+      <div class="card">
+        <div class="card-title">Community Discussion Thread</div>
+        
+        <!-- Comment Form -->
+        <form id="comment-form" style="margin-bottom: 24px;">
+          <div class="form-group">
+            <label>Post a Comment</label>
+            <textarea id="comment-input" rows="3" placeholder="Write your security observations or thoughts..." required></textarea>
+          </div>
+          <button type="submit" class="btn" style="width: auto; padding: 8px 20px;">Submit Comment</button>
+        </form>
+
+        <!-- Comments Container -->
+        <div id="comments-container">
+          {% for c in comments %}
+            <div class="comment-item">
+              <div class="comment-header">
+                <span class="comment-author">{{ c.author }}</span>
+                <span class="comment-time">{{ c.timestamp }}</span>
+              </div>
+              <!-- VULNERABILITY 1: Single-pass sanitized comment rendered raw -->
+              <div class="comment-body">{{ c.content | safe }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Profile Settings -->
+    <div>
+      <div class="card profile-box">
+        <div class="avatar">👩‍💻</div>
+        <div class="profile-name">{{ user.name }}</div>
+        <div class="profile-role">{{ user.role }}</div>
+        
+        <div style="text-align: left; margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px;">
+          <div style="font-weight: 600; font-size: 0.85rem; margin-bottom: 8px;">Personal Portfolio Website</div>
+          <!-- VULNERABILITY 2: javascript: URI scheme rendered in href attribute -->
+          <a href="{{ user.website }}" target="_blank" class="website-link" id="website-display">
+            🌐 {{ user.website }}
+          </a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="font-size: 0.95rem;">Update Portfolio Link</div>
+        <form id="website-form">
+          <div class="form-group">
+            <label>Website URL</label>
+            <input type="text" id="website-input" value="{{ user.website }}" required>
+          </div>
+          <button type="submit" class="btn">Update Link</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const basePath = "{{ base_path }}";
+
+    $('#comment-form').on('submit', function(e) {
+      e.preventDefault();
+      const content = $('#comment-input').val();
+      $.ajax({
+        url: basePath + '/api/v1/comments',
+        method: 'POST',
+        data: { content: content },
+        success: function(res) {
+          if (res.success) {
+            location.reload();
+          }
+        }
+      });
+    });
+
+    $('#website-form').on('submit', function(e) {
+      e.preventDefault();
+      const url = $('#website-input').val();
+      $.ajax({
+        url: basePath + '/api/v1/profile/website',
+        method: 'POST',
+        data: { website: url },
+        success: function(res) {
+          if (res.success) {
+            location.reload();
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

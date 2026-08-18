@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Scenario 1 Source Code Review | Vue.js CSTI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <style>
+    :root {
+      --bg-dark: #0d1117;
+      --bg-side: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --accent: #38bdf8;
+    }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-dark); color: var(--text); margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; }
+    .sidebar { width: 280px; background: var(--bg-side); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+    .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 0.95rem; color: #fff; display: flex; align-items: center; gap: 10px; }
+    .file-list { padding: 10px; flex: 1; overflow-y: auto; }
+    .file-item { padding: 10px 14px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; cursor: pointer; color: var(--text); display: flex; align-items: center; gap: 8px; margin-bottom: 4px; transition: all 0.2s; }
+    .file-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+    .file-item.active { background: rgba(56, 189, 248, 0.15); color: var(--accent); font-weight: 600; }
+    .main-editor { flex: 1; display: flex; flex-direction: column; background: var(--bg-dark); }
+    #editor-header { padding: 14px 24px; background: var(--bg-side); border-bottom: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #8b949e; }
+    pre { margin: 0; padding: 24px; flex: 1; overflow: auto; background: var(--bg-dark) !important; font-family: 'JetBrains Mono', monospace !important; font-size: 0.9rem !important; }
+    code { font-family: 'JetBrains Mono', monospace !important; }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span>📂 Project Source Code</span>
+    </div>
+    <div class="file-list" id="file-list"></div>
+  </div>
+  <div class="main-editor">
+    <div id="editor-header">Select a file to review</div>
+    <pre id="code-frame"><code id="code-block" class="language-javascript">// Code will load here</code></pre>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-docker.min.js"></script>
+  <script>
+    const files = ['server.js', 'views/index.html', 'package.json', 'Dockerfile'];
+    const list = document.getElementById('file-list');
+    files.forEach((f, idx) => {
+      const item = document.createElement('div');
+      item.className = 'file-item' + (idx === 0 ? ' active' : '');
+      item.textContent = f;
+      item.onclick = () => loadFile(f, item);
+      list.appendChild(item);
+    });
+    
+    async function loadFile(name, element) {
+      document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
+      element.classList.add('active');
+      document.getElementById('editor-header').textContent = name;
+      
+      const ext = name.split('.').pop();
+      const codeBlock = document.getElementById('code-block');
+      codeBlock.className = 'language-' + (ext === 'js' ? 'javascript' : ext === 'html' ? 'markup' : ext === 'json' ? 'json' : 'docker');
+      
+      try {
+        const basePath = window.location.pathname.replace(/\/code$/, '').replace(/\/$/, '');
+        const res = await fetch(basePath + '/code/file?name=' + encodeURIComponent(name));
+        const text = await res.text();
+        codeBlock.textContent = text;
+        Prism.highlightElement(codeBlock);
+      } catch (err) {
+        codeBlock.textContent = '// Error loading file: ' + err.message;
+      }
+    }
+    if(files.length > 0) {
+      loadFile(files[0], document.querySelector('.file-item'));
+    }
+  </script>
+</body>
+</html>

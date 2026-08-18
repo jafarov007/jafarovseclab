@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuthPortal - Identity & Access Security</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0a0c;
+      --bg-card: #121215;
+      --bg-input: #1a1a1e;
+      --border-color: #27272a;
+      --border-focus: #52525b;
+      --text-primary: #f4f4f5;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --green-bg: rgba(16, 185, 129, 0.1);
+      --green-border: #10b981;
+      --green-text: #34d399;
+      --green-btn: #059669;
+      --green-btn-hover: #10b981;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navbar */
+    header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: -0.02em;
+    }
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--text-primary);
+      color: var(--bg-primary);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .lang-btn {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .lang-btn:hover {
+      border-color: var(--border-focus);
+    }
+
+    /* Layout Main */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .auth-container {
+      width: 100%;
+      max-width: 440px;
+    }
+
+    /* Credentials Info Banner */
+    .credentials-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      font-size: 0.85rem;
+    }
+    .credentials-title {
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+    .credentials-row {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-primary);
+      margin-top: 4px;
+    }
+
+    /* Form Container */
+    .auth-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 32px;
+    }
+    .auth-header {
+      margin-bottom: 24px;
+    }
+    .auth-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .auth-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    /* Form Inputs */
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .form-input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus {
+      border-color: var(--border-focus);
+    }
+    .form-error {
+      color: #ef4444;
+      font-size: 0.8rem;
+      margin-top: 6px;
+    }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--text-primary);
+      color: var(--bg-primary);
+    }
+    .btn-primary:hover {
+      background: #e4e4e7;
+    }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      margin-top: 12px;
+    }
+    .btn-secondary:hover {
+      border-color: var(--border-focus);
+      color: var(--text-primary);
+    }
+
+    /* Green Alert & Green Button */
+    .green-badge-container {
+      background: var(--green-bg);
+      border: 1px solid var(--green-border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .green-badge-title {
+      color: var(--green-text);
+      font-weight: 700;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .green-badge-text {
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 16px;
+      word-break: break-all;
+    }
+    .btn-green {
+      background: var(--green-btn);
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+    .btn-green:hover {
+      background: var(--green-btn-hover);
+    }
+
+    /* Profile View */
+    .profile-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 32px;
+    }
+    .profile-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+    }
+    .profile-name {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+    .profile-role {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+    .profile-info-grid {
+      display: grid;
+      gap: 12px;
+      font-size: 0.85rem;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--bg-input);
+      border-radius: 6px;
+    }
+
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding: 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <div class="brand">
+        <div class="brand-icon">A</div>
+        <span>AuthPortal</span>
+      </div>
+      <div class="nav-actions">
+        <button class="lang-btn" @click="toggleLang">
+          <span>{{ lang === 'en' ? '🇬🇧 EN' : '🇹🇷 TR' }}</span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <div class="auth-container">
+        
+        <!-- Green Info Message Box (Reset Link Confirmation) -->
+        <div v-if="hasResetRequest" class="green-badge-container">
+          <div class="green-badge-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            {{ t('reset_sent_title') }}
+          </div>
+          <div class="green-badge-text">
+            {{ t('reset_sent_msg') }} <strong>{{USER_EMAIL_INPUT}}</strong>
+          </div>
+          <button class="btn-green">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            {{ t('resend_btn') }}
+          </button>
+        </div>
+
+        <!-- Logged In Profile View -->
+        <div v-if="isLoggedIn" class="profile-card">
+          <div class="profile-avatar">👤</div>
+          <div class="profile-name">Alice Whitfield</div>
+          <div class="profile-role">Software Architect • Engineering & DevOps</div>
+
+          <div class="profile-info-grid">
+            <div class="info-row">
+              <span style="color: var(--text-secondary);">Email</span>
+              <span style="font-family: 'JetBrains Mono', monospace;">user.a@example.com</span>
+            </div>
+            <div class="info-row">
+              <span style="color: var(--text-secondary);">Account Status</span>
+              <span style="color: var(--green-text); font-weight: 600;">Active</span>
+            </div>
+          </div>
+
+          <a href="/logout" class="btn btn-secondary" style="display: block; text-align: center; text-decoration: none; margin-top: 24px;">
+            {{ t('logout_btn') }}
+          </a>
+        </div>
+
+        <!-- Unauthenticated Views -->
+        <div v-else>
+          <!-- Test Credentials Box -->
+          <div class="credentials-card">
+            <div class="credentials-title">
+              🔑 {{ t('cred_title') }}
+            </div>
+            <div class="credentials-row">
+              <span>Email:</span>
+              <span>user.a@example.com</span>
+            </div>
+            <div class="credentials-row">
+              <span>Password:</span>
+              <span>password123</span>
+            </div>
+          </div>
+
+          <!-- Login Form View -->
+          <div v-if="mode === 'login'" class="auth-box">
+            <div class="auth-header">
+              <h2 class="auth-title">{{ t('login_title') }}</h2>
+              <p class="auth-subtitle">{{ t('login_subtitle') }}</p>
+            </div>
+
+            <form @submit.prevent="submitLogin">
+              <div class="form-group">
+                <label class="form-label">{{ t('email_label') }}</label>
+                <input type="email" class="form-input" v-model="loginEmail" required placeholder="user.a@example.com">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">{{ t('pass_label') }}</label>
+                <input type="password" class="form-input" v-model="loginPassword" required placeholder="••••••••">
+              </div>
+
+              <div v-if="loginError" class="form-error">
+                {{ loginError }}
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
+                {{ t('login_btn') }}
+              </button>
+
+              <button type="button" class="btn btn-secondary" @click="mode = 'reset'">
+                {{ t('forgot_btn') }}
+              </button>
+            </form>
+          </div>
+
+          <!-- Password Reset Form View -->
+          <div v-if="mode === 'reset'" class="auth-box">
+            <div class="auth-header">
+              <h2 class="auth-title">{{ t('reset_title') }}</h2>
+              <p class="auth-subtitle">{{ t('reset_subtitle') }}</p>
+            </div>
+
+            <form @submit.prevent="submitPasswordReset">
+              <div class="form-group">
+                <label class="form-label">{{ t('email_label') }}</label>
+                <input type="text" class="form-input" v-model="resetEmail" required placeholder="user.a@example.com">
+                <div v-if="resetError" class="form-error">
+                  {{ resetError }}
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary">
+                {{ t('send_reset_btn') }}
+              </button>
+
+              <button type="button" class="btn btn-secondary" @click="mode = 'login'">
+                {{ t('back_login') }}
+              </button>
+            </form>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+
+    <footer>
+      AuthPortal Enterprise Security © 2026 • JafarovSecLab
+    </footer>
+  </div>
+
+  <!-- Vue.js 2.6.14 CDN with inline fallback engine -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+  <script>
+    if (typeof Vue === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.14/vue.min.js"><\/script>');
+    }
+  </script>
+
+  <script>
+    const dictionary = {
+      en: {
+        cred_title: 'Demo Test Credentials',
+        login_title: 'Sign in to AuthPortal',
+        login_subtitle: 'Enter your account details to access your profile.',
+        reset_title: 'Reset Password',
+        reset_subtitle: 'Enter your registered account email to receive a password reset link.',
+        email_label: 'Email Address',
+        pass_label: 'Password',
+        login_btn: 'Sign In',
+        forgot_btn: 'Forgot Password?',
+        send_reset_btn: 'Send Reset Link',
+        back_login: 'Back to Sign In',
+        logout_btn: 'Sign Out',
+        reset_sent_title: 'Password Reset Requested',
+        reset_sent_msg: 'A password reset link has been successfully dispatched to:',
+        resend_btn: 'Resend Confirmation Email',
+        invalid_email_err: 'Please enter a valid email address (e.g. user.a@example.com)'
+      },
+      tr: {
+        cred_title: 'Demo Test Hesap Bilgileri',
+        login_title: 'AuthPortal Girişi',
+        login_subtitle: 'Profilinize erişmek için hesap bilgilerinizi girin.',
+        reset_title: 'Şifre Sıfırlama',
+        reset_subtitle: 'Şifre sıfırlama bağlantısı almak için kayıtlı e-posta adresinizi girin.',
+        email_label: 'E-posta Adresi',
+        pass_label: 'Şifre',
+        login_btn: 'Giriş Yap',
+        forgot_btn: 'Şifremi Unuttum',
+        send_reset_btn: 'Sıfırlama Bağlantısı Gönder',
+        back_login: 'Giriş Sayfasına Dön',
+        logout_btn: 'Oturumu Kapat',
+        reset_sent_title: 'Şifre Sıfırlama İstek Alındı',
+        reset_sent_msg: 'Şifre sıfırlama bağlantısı başarıyla şu adrese gönderildi:',
+        resend_btn: 'Bağlantıyı Tekrar Gönder',
+        invalid_email_err: 'Lütfen geçerli bir e-posta adresi girin (ör. user.a@example.com)'
+      }
+    };
+
+    new Vue({
+      el: '#app',
+      data: {
+        lang: localStorage.getItem('authportal_lang') || 'en',
+        mode: 'login',
+        loginEmail: 'user.a@example.com',
+        loginPassword: 'password123',
+        loginError: '',
+        resetEmail: 'user.a@example.com',
+        resetError: '',
+        hasResetRequest: {{HAS_RESET_REQUEST}},
+        isLoggedIn: {{IS_LOGGED_IN}}
+      },
+      methods: {
+        t(key) {
+          return (dictionary[this.lang] && dictionary[this.lang][key]) || dictionary['en'][key] || key;
+        },
+        toggleLang() {
+          this.lang = this.lang === 'en' ? 'tr' : 'en';
+          localStorage.setItem('authportal_lang', this.lang);
+        },
+        validateEmail(email) {
+          const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          return re.test(email);
+        },
+        async submitLogin() {
+          this.loginError = '';
+          try {
+            const res = await fetch('/api/v1/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: this.loginEmail, password: this.loginPassword })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+              window.location.href = window.location.pathname;
+            } else {
+              this.loginError = data.error || 'Invalid credentials';
+            }
+          } catch (err) {
+            this.loginError = 'Server error during authentication';
+          }
+        },
+        submitPasswordReset() {
+          this.resetError = '';
+          // Client-side validation checks that the input is a valid email format
+          if (!this.validateEmail(this.resetEmail)) {
+            this.resetError = this.t('invalid_email_err');
+            return;
+          }
+          // Redirect with URL query parameter
+          const targetUrl = window.location.pathname + '?email=' + encodeURIComponent(this.resetEmail);
+          window.location.href = targetUrl;
+        }
+      }
+    });
+  </script>
+</body>
+</html>

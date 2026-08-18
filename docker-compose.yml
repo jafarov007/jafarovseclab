@@ -43,7 +43,7 @@ services:
       - idor-s8
     networks:
       - labnet
-    restart: unless-stopped
+
 
   idor-s1:
     build:
@@ -53,7 +53,7 @@ services:
       - scenarios
     networks:
       - labnet
-    restart: unless-stopped
+
 
   idor-s2:
     build:
@@ -63,7 +63,7 @@ services:
       - scenarios
     networks:
       - labnet
-    restart: unless-stopped
+
 
   idor-s3:
     build:
@@ -73,7 +73,7 @@ services:
       - scenarios
     networks:
       - labnet
-    restart: unless-stopped
+
 
   idor-s4:
     build:
@@ -83,7 +83,7 @@ services:
       - scenarios
     networks:
       - labnet
-    restart: unless-stopped
+
 
   idor-s5:
     build:
@@ -93,7 +93,7 @@ services:
       - scenarios
     networks:
       - labnet
-    restart: unless-stopped
+
 
   idor-s6:
     build:
@@ -103,7 +103,7 @@ services:
       - scenarios
     networks:
       - labnet
-    restart: unless-stopped
+
 
   idor-s7:
     build:
@@ -113,7 +113,7 @@ services:
       - scenarios
     networks:
       - labnet
-    restart: unless-stopped
+
 
   idor-s8:
     build:
@@ -123,7 +123,68 @@ services:
       - scenarios
     networks:
       - labnet
-    restart: unless-stopped
+
+
+  xss-gateway:
+    build:
+      context: ./labs/xss/gateway
+      dockerfile: Dockerfile
+    profiles:
+      - scenarios
+    ports:
+      - "9080:9080"
+      - "9081:9081"
+      - "9082:9082"
+      - "9083:9083"
+      - "9084:9084"
+    depends_on:
+      - xss-s1
+      - xss-s2
+      - xss-s3
+      - xss-s4
+    networks:
+      - labnet
+
+
+  xss-s1:
+    build:
+      context: ./labs/xss/scenarios/s1_vue
+      dockerfile: Dockerfile
+    profiles:
+      - scenarios
+    networks:
+      - labnet
+
+
+  xss-s2:
+    build:
+      context: ./labs/xss/scenarios/s2_jquery
+      dockerfile: Dockerfile
+    profiles:
+      - scenarios
+    networks:
+      - labnet
+
+
+  xss-s3:
+    build:
+      context: ./labs/xss/scenarios/s3_php
+      dockerfile: Dockerfile
+    profiles:
+      - scenarios
+    networks:
+      - labnet
+
+
+  xss-s4:
+    build:
+      context: ./labs/xss/scenarios/s4_python
+      dockerfile: Dockerfile
+    profiles:
+      - scenarios
+    networks:
+      - labnet
+
 
 networks:
   labnet:

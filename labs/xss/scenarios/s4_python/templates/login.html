@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login | DevHub Community (Scenario 4)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #0a0a0c; --card: #121215; --border: #27272a; --text: #f4f4f5; --accent: #38bdf8; --muted: #a1a1aa; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .login-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 420px; padding: 32px; }
+    .brand { font-size: 1.2rem; font-weight: 700; margin-bottom: 24px; text-align: center; }
+    .form-group { margin-bottom: 18px; }
+    label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; }
+    input { width: 100%; background: #1a1a1e; border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; color: var(--text); font-family: inherit; outline: none; }
+    input:focus { border-color: var(--accent); }
+    .btn { width: 100%; padding: 12px; background: var(--text); color: var(--bg); border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+    .btn:hover { background: #e4e4e7; }
+    .error-box { background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; padding: 10px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 16px; }
+    .accounts-box { margin-top: 24px; padding: 16px; background: #18181b; border: 1px dashed var(--border); border-radius: 8px; font-size: 0.8rem; }
+    .account-item { display: flex; justify-content: space-between; margin-top: 8px; font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="brand">💬 DevHub Community Portal</div>
+
+    {% if error_msg %}
+      <div class="error-box">{{ error_msg }}</div>
+    {% endif %}
+
+    <form action="{{ base_path }}/login" method="POST">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" name="email" value="user.a@example.com" required>
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" value="password123" required>
+      </div>
+
+      <button type="submit" class="btn">Sign In to DevHub</button>
+    </form>
+
+    <div class="accounts-box">
+      <div style="font-weight:700; color: var(--muted); margin-bottom: 8px;">🔑 Pre-Seeded Demo Credentials</div>
+      <div class="account-item">
+        <span>Security Engineer:</span>
+        <span style="color: var(--accent);">user.a@example.com / password123</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
